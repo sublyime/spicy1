@@ -15,7 +15,12 @@ const spiceLabels = ['Mild as milk', 'A little heat', 'Getting warm', 'Pretty sp
 
 function api(path, options = {}) {
   const token = localStorage.getItem('spicy-token');
-  return fetch(`/api${path}`, {
+  const queryIndex = path.indexOf('?');
+  const route = queryIndex === -1 ? path : path.slice(0, queryIndex);
+  const query = queryIndex === -1 ? '' : path.slice(queryIndex + 1);
+  const params = new URLSearchParams(query);
+  params.set('route', route);
+  return fetch(`/api/index.php?${params.toString()}`, {
     ...options,
     headers: {
       'Content-Type': 'application/json',
