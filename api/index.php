@@ -116,6 +116,43 @@ function require_role(array $user, array $allowedRoles): void
     }
 }
 
+function ensure_title_metadata_columns(PDO $pdo): void
+{
+    $columns = [
+        'catalog_rating' => 'DECIMAL(3,1) NULL',
+        'genres' => 'TEXT NULL',
+        'tropes' => 'TEXT NULL',
+        'tags' => 'TEXT NULL',
+    ];
+    $check = $pdo->prepare(
+        'SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
+         WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?'
+    );
+
+    foreach ($columns as $name => $definition) {
+        $check->execute(['titles', $name]);
+        if (!$check->fetch()) {
+            try {
+                $pdo->exec("ALTER TABLE titles ADD COLUMN `{$name}` {$definition}");
+            } catch (PDOException $error) {
+                if ($error->getCode() !== '42S21' && (int) ($error->errorInfo[1] ?? 0) !== 1060) {
+                    throw $error;
+                }
+            }
+        }
+    }
+}
+
+function title_metadata_column_exists(PDO $pdo, string $column): bool
+{
+    $check = $pdo->prepare(
+        'SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
+         WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?'
+    );
+    $check->execute(['titles', $column]);
+    return (bool) $check->fetch();
+}
+
 function is_valid_kind(string $kind): bool
 {
     return in_array($kind, ['book', 'movie', 'tv', 'podcast', 'game', 'other'], true);
@@ -491,8 +528,8 @@ try {
     }
 
     $rawBody = file_get_contents('php://input');
-    if ($rawBody !== false && strlen($rawBody) > 32768) {
-        respond(413, ['error' => 'Request body is too large.']);
+    if ($rawBody !== false && strlen($rawBody) > 10485760) { // Support bulk payloads up to 10MB
+        respond(413, ['error' => 'Request payload is too large.']);
     }
 
     try {
@@ -550,12 +587,13 @@ try {
         $kind = query_string('kind');
         $isbn = query_string('isbn');
         $q = query_string('q');
+        $externalOnly = query_string('external') === '1';
 
         if ($kind === '') {
             respond(400, ['error' => 'Media kind is required.']);
         }
 
-        if ($isbn !== '') {
+        if ($isbn !== '' && !$externalOnly) {
             $cleanIsbn = (string) preg_replace('/[\s-]/u', '', $isbn);
             $stmt = $pdo->prepare('SELECT id, title, kind, creator, isbn, barcode, release_year AS releaseYear, cover_url AS coverUrl, description FROM titles WHERE isbn = ? OR barcode = ? LIMIT 1');
             $stmt->execute([$cleanIsbn, $cleanIsbn]);
@@ -571,6 +609,324 @@ try {
         }
 
         respond(404, ['error' => 'No title metadata found. Try refining the title or entering details manually.']);
+    }
+
+    // --- ADMIN BULK IMPORT & DYNAMIC SCHEMA REVIEW ROUTES ---
+
+    // 1. Dry Run / Schema Analysis: Checks for missing columns and duplicate records
+    if ($method === 'POST' && $route === '/admin/media/bulk-analyze') {
+        $admin = authenticated_user($config['jwt_secret'], $pdo);
+        require_role($admin, ['admin']);
+
+        $headers = $body['headers'] ?? [];
+        $rows = $body['rows'] ?? [];
+
+        if (!is_array($headers) || empty($headers) || !is_array($rows) || empty($rows)) {
+            respond(400, ['error' => 'Valid headers and rows array are required for analysis.']);
+        }
+
+        // Fetch current columns in titles table
+        $colStmt = $pdo->query('SHOW COLUMNS FROM titles');
+        $existingCols = [];
+        while ($col = $colStmt->fetch()) {
+            $existingCols[strtolower((string)$col['Field'])] = true;
+        }
+
+        // Standard canonical fields map
+        $canonicalMap = [
+            'title'        => 'title',
+            'name'         => 'title',
+            'kind'         => 'kind',
+            'type'         => 'kind',
+            'media_type'   => 'kind',
+            'creator'      => 'creator',
+            'author'       => 'creator',
+            'director'     => 'creator',
+            'artist'       => 'creator',
+            'isbn'         => 'isbn',
+            'barcode'      => 'barcode',
+            'upc'          => 'barcode',
+            'ean'          => 'barcode',
+            'release_year' => 'release_year',
+            'year'         => 'release_year',
+            'released'     => 'release_year',
+            'cover_url'    => 'cover_url',
+            'cover'        => 'cover_url',
+            'image'        => 'cover_url',
+            'description'  => 'description',
+            'synopsis'     => 'description',
+            'summary'      => 'description'
+        ];
+
+        $missingColumns = [];
+        $sanitizedHeaders = [];
+
+        foreach ($headers as $h) {
+            $rawHeader = trim((string)$h);
+            $cleanKey = strtolower((string)preg_replace('/[^a-zA-Z0-9_]/', '_', $rawHeader));
+            $cleanKey = trim($cleanKey, '_');
+            if ($cleanKey === '') {
+                continue;
+            }
+
+            $mapped = $canonicalMap[$cleanKey] ?? $cleanKey;
+            $sanitizedHeaders[$rawHeader] = $mapped;
+
+            if (!isset($existingCols[$mapped])) {
+                $missingColumns[$mapped] = [
+                    'original_header' => $rawHeader,
+                    'column_name'     => $mapped,
+                    'suggested_type'  => 'TEXT NULL',
+                    'alter_sql'       => "ALTER TABLE titles ADD COLUMN `{$mapped}` TEXT NULL",
+                ];
+            }
+        }
+
+        // Scan rows for duplicate entries in database
+        $totalRows = count($rows);
+        $newRecords = 0;
+        $duplicateRecords = 0;
+        $sampleItems = [];
+
+        foreach ($rows as $index => $row) {
+            if (!is_array($row)) continue;
+
+            $item = [];
+            foreach ($row as $k => $v) {
+                $mappedKey = $sanitizedHeaders[$k] ?? null;
+                if ($mappedKey) {
+                    $item[$mappedKey] = is_scalar($v) ? trim((string)$v) : '';
+                }
+            }
+
+            $itemTitle = $item['title'] ?? '';
+            $itemCreator = $item['creator'] ?? '';
+            $itemIsbn = (string)preg_replace('/[\s-]/u', '', $item['isbn'] ?? '');
+            $itemBarcode = trim($item['barcode'] ?? '');
+
+            if ($itemTitle === '') {
+                continue;
+            }
+
+            // Check if title already exists by ISBN, barcode, or exact Title + Creator match
+            $isDuplicate = false;
+            if ($itemIsbn !== '') {
+                $dupQuery = $pdo->prepare('SELECT id FROM titles WHERE isbn = ? LIMIT 1');
+                $dupQuery->execute([$itemIsbn]);
+                if ($dupQuery->fetch()) $isDuplicate = true;
+            }
+
+            if (!$isDuplicate && $itemBarcode !== '') {
+                $dupQuery = $pdo->prepare('SELECT id FROM titles WHERE barcode = ? LIMIT 1');
+                $dupQuery->execute([$itemBarcode]);
+                if ($dupQuery->fetch()) $isDuplicate = true;
+            }
+
+            if (!$isDuplicate) {
+                if ($itemCreator !== '') {
+                    $dupQuery = $pdo->prepare('SELECT id FROM titles WHERE LOWER(title) = LOWER(?) AND LOWER(creator) = LOWER(?) LIMIT 1');
+                    $dupQuery->execute([$itemTitle, $itemCreator]);
+                    if ($dupQuery->fetch()) $isDuplicate = true;
+                } else {
+                    $dupQuery = $pdo->prepare('SELECT id FROM titles WHERE LOWER(title) = LOWER(?) LIMIT 1');
+                    $dupQuery->execute([$itemTitle]);
+                    if ($dupQuery->fetch()) $isDuplicate = true;
+                }
+            }
+
+            if ($isDuplicate) {
+                $duplicateRecords++;
+            } else {
+                $newRecords++;
+                if (count($sampleItems) < 5) {
+                    $sampleItems[] = [
+                        'title' => $itemTitle,
+                        'kind' => $item['kind'] ?? 'other',
+                        'creator' => $itemCreator,
+                    ];
+                }
+            }
+        }
+
+        respond(200, [
+            'total_rows'        => $totalRows,
+            'new_records'       => $newRecords,
+            'duplicate_records' => $duplicateRecords,
+            'missing_columns'   => array_values($missingColumns),
+            'sample_items'      => $sampleItems
+        ]);
+    }
+
+    // 2. Commit Schema Alterations: Executes admin-approved ALTER TABLE statements
+    if ($method === 'POST' && $route === '/admin/media/apply-schema-changes') {
+        $admin = authenticated_user($config['jwt_secret'], $pdo);
+        require_role($admin, ['admin']);
+
+        $columnsToAdd = $body['columns'] ?? [];
+        if (!is_array($columnsToAdd) || empty($columnsToAdd)) {
+            respond(400, ['error' => 'No approved schema columns provided.']);
+        }
+
+        $applied = [];
+        foreach ($columnsToAdd as $col) {
+            $cleanCol = preg_replace('/[^a-zA-Z0-9_]/', '', (string)$col);
+            if ($cleanCol === '') continue;
+
+            // Verify column doesn't already exist
+            $check = $pdo->prepare(
+                'SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
+                 WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?'
+            );
+            $check->execute(['titles', $cleanCol]);
+            if (!$check->fetch()) {
+                $pdo->exec("ALTER TABLE titles ADD COLUMN `{$cleanCol}` TEXT NULL");
+                $applied[] = $cleanCol;
+            }
+        }
+
+        respond(200, [
+            'message' => 'Schema successfully upgraded with approved fields.',
+            'applied_columns' => $applied
+        ]);
+    }
+
+    // 3. Execute Bulk Media Ingestion: Inserts non-duplicate media rows
+    if ($method === 'POST' && $route === '/admin/media/bulk-import') {
+        $admin = authenticated_user($config['jwt_secret'], $pdo);
+        require_role($admin, ['admin']);
+
+        $rows = $body['rows'] ?? [];
+        if (!is_array($rows) || empty($rows)) {
+            respond(400, ['error' => 'No media rows provided for import.']);
+        }
+
+        // Fetch valid columns from DB
+        $colStmt = $pdo->query('SHOW COLUMNS FROM titles');
+        $validCols = [];
+        while ($c = $colStmt->fetch()) {
+            $validCols[strtolower((string)$c['Field'])] = true;
+        }
+
+        $canonicalMap = [
+            'title'        => 'title',
+            'name'         => 'title',
+            'kind'         => 'kind',
+            'type'         => 'kind',
+            'media_type'   => 'kind',
+            'creator'      => 'creator',
+            'author'       => 'creator',
+            'director'     => 'creator',
+            'artist'       => 'creator',
+            'isbn'         => 'isbn',
+            'barcode'      => 'barcode',
+            'upc'          => 'barcode',
+            'ean'          => 'barcode',
+            'release_year' => 'release_year',
+            'year'         => 'release_year',
+            'released'     => 'release_year',
+            'cover_url'    => 'cover_url',
+            'cover'        => 'cover_url',
+            'image'        => 'cover_url',
+            'description'  => 'description',
+            'synopsis'     => 'description',
+            'summary'      => 'description'
+        ];
+
+        $insertedCount = 0;
+        $skippedCount = 0;
+
+        $pdo->beginTransaction();
+        try {
+            foreach ($rows as $rawRow) {
+                if (!is_array($rawRow)) continue;
+
+                $data = [];
+                foreach ($rawRow as $k => $v) {
+                    $cleanKey = strtolower((string)preg_replace('/[^a-zA-Z0-9_]/', '_', trim((string)$k)));
+                    $mapped = $canonicalMap[$cleanKey] ?? $cleanKey;
+                    if (isset($validCols[$mapped])) {
+                        $data[$mapped] = is_scalar($v) ? trim((string)$v) : '';
+                    }
+                }
+
+                $title = trim($data['title'] ?? '');
+                if ($title === '') {
+                    $skippedCount++;
+                    continue;
+                }
+
+                $kind = strtolower(trim($data['kind'] ?? 'other'));
+                if (!is_valid_kind($kind)) {
+                    $kind = 'other';
+                }
+
+                $creator = trim($data['creator'] ?? '') ?: null;
+                $isbn = preg_replace('/[\s-]/u', '', $data['isbn'] ?? '') ?: null;
+                $barcode = trim($data['barcode'] ?? '') ?: null;
+                $releaseYear = !empty($data['release_year']) ? filter_var($data['release_year'], FILTER_VALIDATE_INT) : null;
+                $coverUrl = trim($data['cover_url'] ?? '') ?: null;
+                $description = trim($data['description'] ?? '') ?: null;
+
+                // Check for duplicate
+                $isDup = false;
+                if ($isbn !== null) {
+                    $chk = $pdo->prepare('SELECT id FROM titles WHERE isbn = ? LIMIT 1');
+                    $chk->execute([$isbn]);
+                    if ($chk->fetch()) $isDup = true;
+                }
+                if (!$isDup && $barcode !== null) {
+                    $chk = $pdo->prepare('SELECT id FROM titles WHERE barcode = ? LIMIT 1');
+                    $chk->execute([$barcode]);
+                    if ($chk->fetch()) $isDup = true;
+                }
+                if (!$isDup) {
+                    if ($creator !== null) {
+                        $chk = $pdo->prepare('SELECT id FROM titles WHERE LOWER(title) = LOWER(?) AND LOWER(creator) = LOWER(?) LIMIT 1');
+                        $chk->execute([$title, $creator]);
+                        if ($chk->fetch()) $isDup = true;
+                    } else {
+                        $chk = $pdo->prepare('SELECT id FROM titles WHERE LOWER(title) = LOWER(?) LIMIT 1');
+                        $chk->execute([$title]);
+                        if ($chk->fetch()) $isDup = true;
+                    }
+                }
+
+                if ($isDup) {
+                    $skippedCount++;
+                    continue;
+                }
+
+                // Prepare dynamic column keys
+                $insertCols = ['title', 'kind', 'creator', 'isbn', 'barcode', 'release_year', 'cover_url', 'description', 'created_by'];
+                $insertVals = [$title, $kind, $creator, $isbn, $barcode, $releaseYear, $coverUrl, $description, $admin['id']];
+
+                // Append any newly reviewed and approved dynamic fields
+                foreach ($data as $dKey => $dVal) {
+                    if (!in_array($dKey, $insertCols, true) && isset($validCols[$dKey])) {
+                        $insertCols[] = $dKey;
+                        $insertVals[] = $dVal !== '' ? $dVal : null;
+                    }
+                }
+
+                $colsSql = implode('`, `', $insertCols);
+                $placeholders = implode(', ', array_fill(0, count($insertVals), '?'));
+                $insertSql = "INSERT INTO titles (`{$colsSql}`) VALUES ({$placeholders})";
+
+                $stmt = $pdo->prepare($insertSql);
+                $stmt->execute($insertVals);
+                $insertedCount++;
+            }
+            $pdo->commit();
+        } catch (Throwable $e) {
+            $pdo->rollBack();
+            throw $e;
+        }
+
+        respond(200, [
+            'message' => "Import complete! Added {$insertedCount} new titles. Skipped {$skippedCount} existing entries.",
+            'inserted' => $insertedCount,
+            'skipped'  => $skippedCount
+        ]);
     }
 
     // --- Auth Routes ---
@@ -708,6 +1064,100 @@ try {
     }
 
     // --- Titles Catalog ---
+    if ($method === 'POST' && $route === '/admin/titles/bulk-update') {
+        $admin = authenticated_user($config['jwt_secret'], $pdo);
+        require_role($admin, ['admin']);
+
+        $ids = $body['ids'] ?? null;
+        $fields = $body['fields'] ?? null;
+        if (!is_array($ids) || count($ids) === 0 || !is_array($fields) || count($fields) === 0) {
+            respond(400, ['error' => 'Select at least one title and one field to update.']);
+        }
+
+        $titleIds = [];
+        foreach ($ids as $id) {
+            $validatedId = filter_var($id, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
+            if ($validatedId === false) {
+                respond(400, ['error' => 'Selected title IDs must be positive integers.']);
+            }
+            $titleIds[] = (int) $validatedId;
+        }
+        $titleIds = array_values(array_unique($titleIds));
+
+        $fieldColumns = [
+            'kind' => 'kind',
+            'creator' => 'creator',
+            'releaseYear' => 'release_year',
+            'coverUrl' => 'cover_url',
+            'description' => 'description',
+            'catalogRating' => 'catalog_rating',
+            'genres' => 'genres',
+            'tropes' => 'tropes',
+            'tags' => 'tags',
+        ];
+        $updates = [];
+        $values = [];
+        foreach ($fields as $field => $value) {
+            if (!isset($fieldColumns[$field])) {
+                respond(400, ['error' => "Unsupported bulk field: {$field}."]);
+            }
+
+            if ($field === 'kind') {
+                if (!is_string($value) || !is_valid_kind($value)) {
+                    respond(400, ['error' => 'Choose a valid media category.']);
+                }
+                $normalized = $value;
+            } elseif ($field === 'releaseYear') {
+                $normalized = $value === '' || $value === null ? null : filter_var($value, FILTER_VALIDATE_INT);
+                if ($normalized === false || ($normalized !== null && ($normalized < 1 || $normalized > 9999))) {
+                    respond(400, ['error' => 'Enter a valid release year (1–9999).']);
+                }
+            } elseif ($field === 'catalogRating') {
+                $normalized = $value === '' || $value === null ? null : (is_numeric($value) ? (float) $value : false);
+                if ($normalized === false || ($normalized !== null && ($normalized < 0 || $normalized > 5))) {
+                    respond(400, ['error' => 'Catalog rating must be a number from 0 to 5.']);
+                }
+            } else {
+                if (!is_string($value)) {
+                    respond(400, ['error' => "The {$field} field must be text."]);
+                }
+                $normalized = trim($value);
+                $maxLength = match ($field) {
+                    'creator' => 200,
+                    'coverUrl' => 2048,
+                    'description' => 1500,
+                    default => 10000,
+                };
+                if (text_length($normalized) > $maxLength) {
+                    respond(400, ['error' => "The {$field} field exceeds its maximum length of {$maxLength} characters."]);
+                }
+                if ($field === 'coverUrl' && $normalized !== '' && !preg_match('/^https?:\\/\\//i', $normalized)) {
+                    respond(400, ['error' => 'Cover URL must be a valid http(s) URL.']);
+                }
+                $normalized = $normalized !== '' ? $normalized : null;
+            }
+
+            $updates[] = "`{$fieldColumns[$field]}` = ?";
+            $values[] = $normalized;
+        }
+
+        if (array_intersect(['catalogRating', 'genres', 'tropes', 'tags'], array_keys($fields))) {
+            ensure_title_metadata_columns($pdo);
+        }
+
+        $idPlaceholders = implode(', ', array_fill(0, count($titleIds), '?'));
+        $values = array_merge($values, $titleIds);
+        $statement = $pdo->prepare(
+            'UPDATE titles SET ' . implode(', ', $updates) . " WHERE id IN ({$idPlaceholders})"
+        );
+        $statement->execute($values);
+
+        respond(200, [
+            'message' => 'Bulk metadata update complete.',
+            'updated' => $statement->rowCount(),
+        ]);
+    }
+
     if ($method === 'GET' && $route === '/titles') {
         $rawQuery = query_string('q');
         $query = truncate_text($rawQuery, 120);
@@ -715,6 +1165,18 @@ try {
         $minSpice = query_string('minSpice');
         $maxSpice = query_string('maxSpice');
         $needsInfo = query_string('needsInfo');
+        if ($needsInfo === '1') {
+            $admin = authenticated_user($config['jwt_secret'], $pdo);
+            require_role($admin, ['admin']);
+            ensure_title_metadata_columns($pdo);
+        }
+
+        $catalogRatingColumn = title_metadata_column_exists($pdo, 'catalog_rating')
+            ? 't.catalog_rating'
+            : 'NULL';
+        $genresColumn = title_metadata_column_exists($pdo, 'genres') ? 't.genres' : 'NULL';
+        $tropesColumn = title_metadata_column_exists($pdo, 'tropes') ? 't.tropes' : 'NULL';
+        $tagsColumn = title_metadata_column_exists($pdo, 'tags') ? 't.tags' : 'NULL';
 
         $conditions = [];
         $values = [];
@@ -762,6 +1224,10 @@ try {
                     t.release_year AS releaseYear,
                     t.cover_url AS coverUrl, 
                     t.description,
+                    {$catalogRatingColumn} AS catalogRating,
+                    {$genresColumn} AS genres,
+                    {$tropesColumn} AS tropes,
+                    {$tagsColumn} AS tags,
                     COALESCE(stats.reviewCount, 0) AS reviewCount,
                     stats.averageSpice AS averageSpice,
                     stats.averageRating AS averageRating
@@ -776,8 +1242,8 @@ try {
                     GROUP BY title_id
                 ) stats ON stats.title_id = t.id
                 $where
-                ORDER BY $order t.created_at DESC 
-                LIMIT 60";
+                ORDER BY $order t.created_at DESC
+                " . ($needsInfo === '1' ? '' : 'LIMIT 60');
 
         $statement = $pdo->prepare($sql);
         $statement->execute($values);
@@ -786,6 +1252,7 @@ try {
         foreach ($rows as &$item) {
             $item['id'] = (int) $item['id'];
             $item['releaseYear'] = $item['releaseYear'] !== null ? (int) $item['releaseYear'] : null;
+            $item['catalogRating'] = $item['catalogRating'] !== null ? (float) $item['catalogRating'] : null;
             $item['reviewCount'] = (int) $item['reviewCount'];
             $item['averageSpice'] = $item['averageSpice'] !== null ? (float) $item['averageSpice'] : null;
             $item['averageRating'] = $item['averageRating'] !== null ? (float) $item['averageRating'] : null;
@@ -915,6 +1382,24 @@ try {
         $releaseYear = $releaseInput !== '' ? filter_var($releaseInput, FILTER_VALIDATE_INT) : null;
         $coverUrl = trim(body_string($body, 'coverUrl')) ?: null;
         $description = trim(body_string($body, 'description')) ?: null;
+        $metadataFields = [];
+        if (array_key_exists('catalogRating', $body)) {
+            $catalogRatingInput = body_string($body, 'catalogRating');
+            $catalogRating = $catalogRatingInput !== '' ? (is_numeric($catalogRatingInput) ? (float) $catalogRatingInput : false) : null;
+            if ($catalogRating === false || ($catalogRating !== null && ($catalogRating < 0 || $catalogRating > 5))) {
+                respond(400, ['error' => 'Catalog rating must be a number from 0 to 5.']);
+            }
+            $metadataFields['catalog_rating'] = $catalogRating;
+        }
+        foreach (['genres', 'tropes', 'tags'] as $field) {
+            if (array_key_exists($field, $body)) {
+                $value = trim(body_string($body, $field)) ?: null;
+                if ($value !== null && text_length($value) > 10000) {
+                    respond(400, ucfirst($field) . ' must be 10,000 characters or fewer.');
+                }
+                $metadataFields[$field] = $value;
+            }
+        }
 
         if ($title === '' || text_length($title) > 200) {
             respond(400, ['error' => 'Title is required and must be 200 characters or fewer.']);
@@ -922,11 +1407,18 @@ try {
         if (!is_valid_kind($kind)) {
             respond(400, ['error' => 'Choose a valid media type.']);
         }
-
-        $stmt = $pdo->prepare(
-            'UPDATE titles SET title = ?, kind = ?, creator = ?, isbn = ?, barcode = ?, release_year = ?, cover_url = ?, description = ? WHERE id = ?'
-        );
-        $stmt->execute([$title, $kind, $creator, $isbn, $barcode, $releaseYear, $coverUrl, $description, $titleId]);
+        $setClause = 'title = ?, kind = ?, creator = ?, isbn = ?, barcode = ?, release_year = ?, cover_url = ?, description = ?';
+        $values = [$title, $kind, $creator, $isbn, $barcode, $releaseYear, $coverUrl, $description];
+        if ($metadataFields !== []) {
+            ensure_title_metadata_columns($pdo);
+            foreach ($metadataFields as $column => $value) {
+                $setClause .= ", `{$column}` = ?";
+                $values[] = $value;
+            }
+        }
+        $values[] = $titleId;
+        $stmt = $pdo->prepare("UPDATE titles SET {$setClause} WHERE id = ?");
+        $stmt->execute($values);
 
         respond(200, ['message' => 'Title updated successfully.']);
     }
@@ -1126,7 +1618,6 @@ try {
         $stmt->execute($params);
         $posts = $stmt->fetchAll();
 
-        // Fetch comments for these posts
         $postIds = array_column($posts, 'id');
         $commentsByPost = [];
         if (!empty($postIds)) {

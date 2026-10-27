@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import './styles.css';
 
@@ -75,8 +75,14 @@ function App() {
   const [apiOnline, setApiOnline] = useState(true);
   const [catalogError, setCatalogError] = useState('');
   const [loading, setLoading] = useState(true);
-  const [favorites, setFavorites] = useState([]);
   const [authMode, setAuthMode] = useState('login');
+  const [libraryItems, setLibraryItems] = useState([]);
+  const [libraryLoading, setLibraryLoading] = useState(false);
+  const [libraryError, setLibraryError] = useState('');
+  const [libraryBusy, setLibraryBusy] = useState(false);
+  const [viewerSide, setViewerSide] = useState('front');
+  const [pendingShelfItem, setPendingShelfItem] = useState(null);
+  const libraryRequest = useRef(0);
 
   const loadTitles = async () => {
     setLoading(true);
@@ -106,8 +112,81 @@ function App() {
     if (token) api('/auth/me').then(({ user: current }) => setUser(current)).catch(() => localStorage.removeItem('spicy-token'));
   }, []);
 
-  const featured = useMemo(() => titles.slice(0, 4), [titles]);
-  const toggleFavorite = (id) => setFavorites((current) => current.includes(id) ? current.filter((item) => item !== id) : [...current, id]);
+  const loadLibrary = async (userId) => {
+    const requestId = ++libraryRequest.current;
+    setLibraryLoading(true);
+    setLibraryError('');
+    try {
+      const { library } = await api(`/users/${userId}/library`);
+      if (requestId === libraryRequest.current) setLibraryItems(library.map((entry) => ({ ...entry, id: entry.titleId })));
+    } catch (error) {
+      if (requestId === libraryRequest.current) setLibraryError(error.message);
+    } finally {
+      if (requestId === libraryRequest.current) setLibraryLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (user) loadLibrary(user.id);
+    else {
+      libraryRequest.current += 1;
+      setLibraryItems([]);
+      setLibraryLoading(false);
+      setLibraryError('');
+    }
+  }, [user?.id]);
+
+  const placeOnShelf = async (item) => {
+    if (!user) {
+      setPendingShelfItem(item);
+      setAuthMode('login');
+      setModal('auth');
+      return;
+    }
+    setLibraryBusy(true);
+    setLibraryError('');
+    try {
+      await api('/library/add', { method: 'POST', body: JSON.stringify({ titleId: item.id, status: 'completed' }) });
+      setLibraryItems((current) => current.some((entry) => String(entry.id) === String(item.id)) ? current : [{ ...item, id: item.id }, ...current]);
+      showToast('Placed on your shelf.');
+      await loadLibrary(user.id);
+    } catch (error) {
+      setLibraryError(error.message);
+    } finally {
+      setLibraryBusy(false);
+    }
+  };
+
+  useEffect(() => {
+    if (user && pendingShelfItem) {
+      const item = pendingShelfItem;
+      setPendingShelfItem(null);
+      setModal('viewer');
+      placeOnShelf(item);
+    }
+  }, [user?.id]);
+
+  const removeFromShelf = async (item) => {
+    setLibraryBusy(true);
+    setLibraryError('');
+    try {
+      await api(`/library/${item.id}`, { method: 'DELETE' });
+      setLibraryItems((current) => current.filter((entry) => String(entry.id) !== String(item.id)));
+      showToast('Removed from your shelf.');
+      setModal(null);
+    } catch (error) {
+      setLibraryError(error.message);
+    } finally {
+      setLibraryBusy(false);
+    }
+  };
+
+  const openViewer = (item) => {
+    setSelected(item);
+    setViewerSide('front');
+    setLibraryError('');
+    setModal('viewer');
+  };
 
   const showToast = (message) => {
     setToast(message);
@@ -130,6 +209,7 @@ function App() {
         </a>
         <nav className="top-nav" aria-label="Main navigation">
           <a className="nav-active" href="#explore">Explore</a>
+          <button className="nav-shelf" onClick={() => user ? document.getElementById('my-library')?.scrollIntoView({ behavior: 'smooth' }) : (setAuthMode('login'), setModal('auth'))}>My shelf</button>
           <a href="#how-it-works">How it works</a>
           <a href="#community">Community</a>
         </nav>
@@ -169,6 +249,17 @@ function App() {
           <div className="hero-foot"><span><Icon name="heart" size={15} /> Made for the way you feel</span><span>Stories are personal. Your choices should be, too.</span></div>
         </section>
 
+        {user && <section className="library-section" id="my-library">
+          <div className="section-top">
+            <div><div className="eyebrow eyebrow-dark">A LITTLE SPACE THAT’S YOURS</div><h2>{user.name.split(' ')[0]}’s <em>shelf.</em></h2></div>
+            <span className="shelf-count">{libraryItems.length} {libraryItems.length === 1 ? 'story' : 'stories'}</span>
+          </div>
+          {libraryLoading ? <div className="loading-state shelf-loading">Bringing your stories to the shelf…</div> :
+            libraryError && !libraryItems.length ? <div className="empty-state shelf-empty"><h3>Your shelf didn’t load.</h3><p>{libraryError}</p><button className="button button-outline" onClick={() => loadLibrary(user.id)}>Try again</button></div> :
+              libraryItems.length ? <Bookshelf items={libraryItems} onOpen={openViewer} label="Your library" /> :
+                <div className="empty-state shelf-empty"><span className="empty-spark">✳</span><h3>Your shelf is waiting.</h3><p>Pick a story from the community shelf and place it here to keep it close.</p><button className="button button-outline" onClick={() => document.getElementById('community-shelf')?.scrollIntoView({ behavior: 'smooth' })}>Explore the shelves <Icon name="arrow" size={16} /></button></div>}
+        </section>}
+
         <section className="browse-section">
           <div className="section-top">
             <div><div className="eyebrow eyebrow-dark">YOUR NEXT READ, WATCH, OR LISTEN</div><h2>Find your kind of <em>story.</em></h2></div>
@@ -181,10 +272,8 @@ function App() {
             <div className="discover-column">
               <div className="list-heading"><h3>{query ? 'Search results' : activeType === 'all' ? 'A few community favorites' : `${types.find((item) => item.id === activeType)?.label} to explore`}</h3><span>{loading ? 'Finding stories…' : `${titles.length} ${titles.length === 1 ? 'story' : 'stories'}`}</span></div>
               {loading ? <div className="loading-state">A moment while we find your next favorite…</div> :
-                featured.length ? <div className="title-grid">{featured.map((item) => <TitleCard key={item.id} item={item} favorite={favorites.includes(item.id)} onFavorite={() => toggleFavorite(item.id)} onOpen={() => { setSelected(item); setModal('detail'); }} />)}</div> :
+                titles.length ? <Bookshelf id="community-shelf" items={titles} onOpen={openViewer} label="Community shelf" /> :
                   <div className="empty-state"><span className="empty-spark">✳</span><h3>{apiOnline ? 'No stories just yet.' : 'We can’t reach the catalog.'}</h3><p>{apiOnline ? 'Try a different search, or be the first to add this one.' : catalogError || 'Check your MySQL setup and API connection, then refresh to try again.'}</p><button className="button button-primary" onClick={() => user ? setModal('add') : (setAuthMode('register'), setModal('auth'))}><Icon name="plus" size={16} /> Add to the catalog</button></div>}
-              {titles.length > 4 && <button className="button button-outline see-more" onClick={() => document.getElementById('all-results')?.scrollIntoView({ behavior: 'smooth' })}>See all {titles.length} results <Icon name="arrow" size={16} /></button>}
-              {titles.length > 4 && <div id="all-results" className="extra-results">{titles.slice(4).map((item) => <button key={item.id} className="mini-result" onClick={() => { setSelected(item); setModal('detail'); }}><Cover item={item} small /><span><b>{item.title}</b><small>{item.creator || item.kind}</small></span><span className="mini-result-arrow">↗</span></button>)}</div>}
             </div>
             <aside className="side-column">
               <div className="note-card">
@@ -215,26 +304,70 @@ function App() {
 
       <footer className="site-footer"><a className="footer-brand" href="#">is it too <b>spicy?</b> <span>✳</span></a><span>Made with care, for stories worth feeling.</span><span>© {new Date().getFullYear()} Is It Too Spicy?</span></footer>
       {toast && <div className="toast" role="status">{toast}</div>}
-      {modal === 'auth' && <AuthModal mode={authMode} setMode={setAuthMode} onClose={() => setModal(null)} onSuccess={(newUser) => { setUser(newUser); setModal(null); showToast(`Welcome${newUser.name ? `, ${newUser.name.split(' ')[0]}` : ''}! You're in.`); }} />}
+      {modal === 'auth' && <AuthModal mode={authMode} setMode={setAuthMode} onClose={() => { setModal(null); setPendingShelfItem(null); }} onSuccess={(newUser) => { setUser(newUser); setModal(pendingShelfItem ? 'viewer' : null); showToast(`Welcome${newUser.name ? `, ${newUser.name.split(' ')[0]}` : ''}! You're in.`); }} />}
       {modal === 'add' && <AddModal onClose={() => setModal(null)} onCreated={(item) => { setTitles((current) => [item, ...current]); setModal(null); showToast('Added to the community catalog.'); setSelected(item); setModal('review'); }} />}
+      {modal === 'viewer' && selected && <MediaViewer item={selected} side={viewerSide} onSideChange={setViewerSide} isOnShelf={libraryItems.some((item) => String(item.id) === String(selected.id))} busy={libraryBusy} error={libraryError} onPlace={() => placeOnShelf(selected)} onRemove={() => removeFromShelf(selected)} onReturn={() => setModal(null)} onDetails={() => setModal('detail')} />}
       {modal === 'detail' && selected && <DetailModal item={selected} onClose={() => setModal(null)} onReview={() => { if (!user) { setAuthMode('register'); setModal('auth'); return; } setModal('review'); }} />}
       {modal === 'review' && selected && <ReviewModal item={selected} onClose={() => setModal(null)} onSaved={() => { setModal(null); showToast('Your note is saved. Thanks for looking out for each other.'); loadTitles(); }} />}
     </div>
   );
 }
 
-function TitleCard({ item, favorite, onFavorite, onOpen }) {
-  const spice = Number(item.averageSpice);
-  return (
-    <article className="title-card">
-      <button className="cover-button" onClick={onOpen} aria-label={`View ${item.title}`}><Cover item={item} /><span className="card-kind">{item.kind === 'tv' ? 'TV & STREAMING' : item.kind.toUpperCase()}</span></button>
-      <button className={`favorite-button ${favorite ? 'is-favorite' : ''}`} onClick={onFavorite} aria-label={favorite ? 'Remove from favorites' : 'Add to favorites'}><Icon name="heart" size={18} /></button>
-      <button className="card-content" onClick={onOpen}>
-        <span className="card-title">{item.title}</span><span className="card-creator">{item.creator || 'Community pick'}{item.releaseYear ? ` · ${item.releaseYear}` : ''}</span>
-        <span className="card-bottom"><span className="spice-meter" aria-label={`${spice || 0} out of 5 spice`}><span className="meter-flame">✳</span>{spice > 0 ? `${spice} / 5` : 'Be the first'}</span><span className="review-count">{item.reviewCount || 0} notes <span>↗</span></span></span>
-      </button>
-    </article>
-  );
+function Bookshelf({ id, items, onOpen, label }) {
+  const trackRef = useRef(null);
+  const drag = useRef(null);
+
+  const startDrag = (event) => {
+    if (event.button !== 0) return;
+    drag.current = { startX: event.clientX, scrollLeft: trackRef.current.scrollLeft, moved: false };
+    const itemButton = event.target.closest('.shelf-item');
+    (itemButton || trackRef.current).setPointerCapture(event.pointerId);
+  };
+  const moveDrag = (event) => {
+    if (!drag.current || !trackRef.current) return;
+    const distance = event.clientX - drag.current.startX;
+    if (Math.abs(distance) > 5) drag.current.moved = true;
+    if (drag.current.moved) trackRef.current.scrollLeft = drag.current.scrollLeft - distance;
+  };
+  const handleClick = (event) => {
+    if (drag.current?.moved) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+    drag.current = null;
+  };
+  const scrollByShelf = (direction) => trackRef.current?.scrollBy({ left: direction * 360, behavior: 'smooth' });
+
+  return <div className="bookshelf" id={id} role="region" aria-label={label}>
+    <div className="shelf-controls"><span>Scroll or drag to browse</span><div><button onClick={() => scrollByShelf(-1)} aria-label="Scroll shelf left"><Icon name="arrow" size={16} /></button><button onClick={() => scrollByShelf(1)} aria-label="Scroll shelf right"><Icon name="arrow" size={16} /></button></div></div>
+    <div className="shelf-track" ref={trackRef} onPointerDown={startDrag} onPointerMove={moveDrag} onPointerCancel={() => { drag.current = null; }} onClickCapture={handleClick}>
+      <div className="shelf-items">{items.map((item) => <button className="shelf-item" key={item.id} onClick={() => onOpen(item)} aria-label={`Pick up ${item.title}`}>
+        <span className="shelf-cover"><Cover item={item} /><span className="shelf-media-kind">{item.kind === 'tv' ? 'TV & STREAMING' : item.kind.toUpperCase()}</span></span>
+        <span className="shelf-item-title">{item.title}</span><span className="shelf-item-creator">{item.creator || 'Community pick'}</span>
+      </button>)}</div>
+      <div className="shelf-plank" aria-hidden="true"><span /></div>
+    </div>
+  </div>;
+}
+
+function MediaViewer({ item, side, onSideChange, isOnShelf, busy, error, onPlace, onRemove, onReturn, onDetails }) {
+  const isBack = side === 'back';
+  return <ModalFrame onClose={onReturn} wide>
+    <div className="viewer-heading"><span className="modal-kicker">PICKED UP FROM THE SHELF</span><h2>{item.title}</h2><p>{isBack ? 'Turn it over to see the front.' : 'Take a closer look, then set it back or keep it on your shelf.'}</p></div>
+    <div className={`held-media ${isBack ? 'held-media-back' : ''}`}>
+      {isBack && item.backCoverUrl ? <div className="held-cover held-cover-back"><img src={item.backCoverUrl} alt={`Back cover of ${item.title}`} /></div> :
+        isBack ? <div className="held-cover held-cover-back held-back-details"><span className="back-cover-kicker">A LITTLE ABOUT THIS STORY</span><h3>{item.title}</h3><p>{item.description || 'No back-cover details have been added yet.'}</p><span className="back-cover-creator">{item.creator || 'Community catalog'}</span></div> :
+          <div className="held-cover"><Cover item={item} /></div>}
+      <div className="viewer-hand" aria-hidden="true"><span /><span /><span /><span /><b /></div>
+    </div>
+    <div className="viewer-actions">
+      <div className="viewer-flip-controls"><button className={`button button-outline ${!isBack ? 'viewer-side-active' : ''}`} onClick={() => onSideChange('front')}>Front cover</button><button className={`button button-outline ${isBack ? 'viewer-side-active' : ''}`} onClick={() => onSideChange('back')}>Back cover</button></div>
+      <button className="button button-outline" onClick={onDetails}>Community notes</button>
+      {isOnShelf ? <button className="button button-primary" onClick={onReturn}>Put it back on my shelf</button> : <button className="button button-primary" onClick={onPlace} disabled={busy}>{busy ? 'Placing…' : 'Place on my shelf'}</button>}
+      {isOnShelf && <button className="viewer-remove" onClick={onRemove} disabled={busy}>{busy ? 'Updating…' : 'Remove from my shelf'}</button>}
+      {error && <p className="form-error viewer-error" role="alert">{error}</p>}
+    </div>
+  </ModalFrame>;
 }
 
 function AuthModal({ mode, setMode, onClose, onSuccess }) {
