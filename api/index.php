@@ -641,7 +641,7 @@ function fetch_public_related_media(string $type, string $kind, string $query): 
 }
 
 try {
-    $configFile = __DIR__ . '/config.php';
+    $configFile = dirname(__DIR__, 2) . DIRECTORY_SEPARATOR . 'config.php';
     if (!file_exists($configFile)) {
         throw new RuntimeException('Configuration file config.php not found.');
     }

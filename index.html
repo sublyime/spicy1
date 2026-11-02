@@ -5,13 +5,14 @@
   <meta name='impact-site-verification' value='ab3d8728-e6fa-4d88-b01d-9ee3e46f4d07'>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <!-- Google tag (gtag.js) -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-B03XS4BEP2"></script>
-  <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
-    gtag('config', 'G-B03XS4BEP2');
-  </script>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-RWLKQVJCV3"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-RWLKQVJCV3');
+</script>
   <title>IS IT TOO SPICY? — Futuristic Media Spice & Community Hub</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -786,7 +787,7 @@
       z-index: 2;
       pointer-events: none;
     }
-    .shelf-item-cover { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .shelf-item-cover { width: 100%; height: 100%; object-fit: contain; display: block; background: #08050e; }
     .shelf-item-tag {
       position: absolute;
       top: 8px; right: 8px;
@@ -874,7 +875,8 @@
       justify-content: space-between;
       border: 2px solid var(--border-neon);
     }
-    .held-card-front img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .held-card-front { background: #08050e; }
+    .held-card-front img { width: 100%; height: 100%; object-fit: contain; display: block; }
 
     .inspect-pedestal-light {
       position: absolute;
@@ -957,7 +959,13 @@
       object-fit: contain;
       transition: transform 0.5s var(--ease-out);
     }
-    .media-card:hover .card-cover { transform: scale(1.05); }
+    .media-card:hover .card-cover { transform: none; }
+    #discovery-catalog-results img,
+    #discovery-public-results img {
+      flex: 0 0 54px;
+      object-fit: contain !important;
+      background: #080811;
+    }
 
     .kind-pill {
       position: absolute;
@@ -992,6 +1000,13 @@
       box-shadow: var(--shadow-sm), 0 0 16px rgba(255, 61, 110, 0.15);
     }
     .card-body { padding: 14px 15px; display: flex; flex-direction: column; flex: 1; }
+    .catalog-rank {
+      margin-bottom: 5px;
+      color: var(--neon-crimson);
+      font-size: 0.66rem;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+    }
     .card-title {
       font-size: 0.98rem;
       font-weight: 700;
@@ -1414,6 +1429,280 @@
       .site-footer { padding: 18px 16px; }
       .footer-inner { flex-direction: column; text-align: center; justify-content: center; }
     }
+
+    @media (max-width: 1024px) {
+      header {
+        flex-wrap: wrap;
+        gap: 12px;
+        padding: 12px 20px;
+      }
+
+      .brand { flex: 1 1 220px; }
+      .nav-tabs {
+        order: 3;
+        flex: 1 1 100%;
+        justify-content: center;
+      }
+      .nav-actions { flex: 0 1 auto; }
+      .container { padding: 24px 20px 52px; }
+      .hero { align-items: flex-start; }
+      .filter-bar > .search-box { flex: 1 1 100%; }
+      .filter-bar > .select-input {
+        flex: 1 1 220px;
+        width: auto !important;
+      }
+      .community-layout > aside > div {
+        flex-direction: row !important;
+        flex-wrap: wrap;
+      }
+      .community-layout > aside > div > .btn { flex: 1 1 190px; }
+      .inbox-layout > aside > div,
+      .admin-layout > aside > div {
+        flex-direction: row !important;
+        flex-wrap: wrap;
+      }
+      .inbox-layout > aside > div > .btn,
+      .admin-layout > aside > div > .btn { flex: 1 1 190px; }
+      .swarm-stage { height: clamp(400px, 58svh, 600px); }
+      .modal-backdrop { padding: 16px; }
+      .modal-box { padding: 24px; }
+      #view-admin [style*="grid-template-columns: 1fr 1fr"] {
+        grid-template-columns: minmax(0, 1fr) !important;
+      }
+      #view-community, #view-members, #view-library, #view-inbox, #view-admin,
+      .community-layout > *, .inbox-layout > *, .admin-layout > * {
+        min-width: 0;
+      }
+    }
+
+    @media (max-width: 600px) {
+      body { font-size: 14px; }
+
+      header {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 10px;
+        padding: 10px 12px;
+      }
+      .brand { min-width: 0; gap: 8px; }
+      .brand-icon { width: 36px; height: 36px; flex: 0 0 36px; }
+      .brand-title { font-size: 0.94rem; }
+      .brand-sub { display: none; }
+      .nav-tabs {
+        grid-column: 1 / -1;
+        order: initial;
+        flex-wrap: wrap;
+        justify-content: center;
+        min-width: 0;
+        width: 100%;
+        overflow: visible;
+      }
+      .nav-tab {
+        flex: 1 1 calc(50% - 8px);
+        justify-content: center;
+        min-height: 42px;
+        padding: 8px 12px;
+        font-size: 0.78rem;
+      }
+      .nav-actions { gap: 6px; }
+      .nav-actions .btn { min-height: 44px; padding: 8px 10px; font-size: 0.76rem; }
+      .user-pill { padding-right: 8px; }
+      .user-pill > div:not(.user-avatar) { display: none; }
+
+      .container { padding: 18px 12px 40px; }
+      .hero {
+        padding: 22px 18px;
+        gap: 18px;
+        margin-bottom: 14px;
+      }
+      .hero > div:first-child { min-width: 0; }
+      .hero h1 { font-size: clamp(1.55rem, 7vw, 2rem); }
+      .hero p { font-size: 0.88rem; }
+      .hero > div:last-child { width: 100%; gap: 8px !important; }
+      .view-toggle-wrap { max-width: 100%; overflow-x: auto; }
+      .view-toggle-btn { min-height: 42px; white-space: nowrap; }
+      .filter-bar { padding: 10px; gap: 8px; }
+      .filter-bar > .search-box,
+      .filter-bar > .select-input {
+        flex: 1 1 100%;
+        width: 100% !important;
+        min-width: 0;
+      }
+      .search-box input, .select-input { min-height: 44px; }
+
+      .swarm-controls-bar { gap: 10px; }
+      .swarm-control-item {
+        flex: 1 1 100%;
+        justify-content: space-between;
+      }
+      .swarm-slider { width: min(48%, 180px); height: 8px; }
+      .swarm-slider::-webkit-slider-thumb { width: 20px; height: 20px; }
+      .swarm-slider::-moz-range-thumb { width: 20px; height: 20px; }
+      .swarm-stage { height: clamp(320px, 52svh, 440px); }
+      .swarm-hud { top: 10px; left: 10px; right: 10px; gap: 6px; }
+      .swarm-hud-pill { padding: 6px 9px; font-size: 0.68rem; }
+      .swarm-hud-pill:nth-child(2) { display: none; }
+
+      .media-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+      .media-card { min-width: 0; }
+      .community-layout, .inbox-layout, .admin-layout { gap: 14px; }
+      .glass-panel { padding: 16px; }
+      #view-community .community-layout > aside > div,
+      #view-inbox .inbox-layout > aside > div,
+      #view-admin .admin-layout > aside > div {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 7px !important;
+      }
+      #view-community .community-layout > aside > div > .btn,
+      #view-inbox .inbox-layout > aside > div > .btn,
+      #view-admin .admin-layout > aside > div > .btn {
+        min-width: 0;
+        min-height: 48px;
+        padding: 8px;
+        justify-content: center !important;
+        white-space: normal;
+        text-align: center;
+        font-size: 0.76rem;
+      }
+      #view-community .community-layout > div,
+      #inbox-main-content,
+      #view-admin .admin-layout > div { min-width: 0; }
+      #view-community form > div[style*="grid-template-columns"] {
+        grid-template-columns: minmax(0, 1fr) !important;
+        gap: 8px !important;
+      }
+      #view-library > .glass-panel > div:last-child {
+        width: 100%;
+        align-items: stretch !important;
+      }
+      #view-library #shelf-relations-container { flex-wrap: wrap; }
+      #view-library #shelf-filter { width: 100% !important; }
+      .shelf-item { flex-basis: 104px; height: 156px; }
+      .shelf-scroll-area { gap: 12px; padding: 12px 12px 0; }
+      .bookshelf-unit { padding: 18px 10px; gap: 28px; }
+      .friend-row {
+        align-items: flex-start;
+        flex-wrap: wrap;
+        gap: 8px;
+        padding: 10px;
+      }
+      .friend-row > div { min-width: 0; }
+      .friend-row > div:last-child {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        width: 100%;
+      }
+      .friend-row > div:last-child .btn { flex: 1 1 auto; min-height: 40px; }
+      .inbox-row { align-items: flex-start; padding: 10px; gap: 9px; }
+      .inbox-row > div { min-width: 0; overflow-wrap: anywhere; }
+      .inbox-row > div > div:first-child { align-items: flex-start; gap: 8px; flex-wrap: wrap; }
+      #inbox-main-content > .glass-panel[style*="height: 600px"] {
+        height: min(600px, calc(100svh - 220px)) !important;
+        min-height: 360px;
+      }
+      #inbox-main-content form[onsubmit^="sendMessage"] { gap: 7px !important; }
+      #inbox-main-content #chat-input {
+        min-width: 0;
+        min-height: 44px;
+        font-size: 16px !important;
+      }
+      #inbox-main-content form[onsubmit^="sendMessage"] .btn { min-height: 44px; }
+      #view-admin .glass-panel { overflow-wrap: anywhere; }
+      #view-admin input[type="file"] { max-width: 100%; }
+      #view-admin .glass-panel [style*="display: flex; gap: 8px"] > input { min-width: 0; }
+      #view-admin .glass-panel pre { max-width: 100%; }
+      .media-grid .glass-panel { overflow-wrap: anywhere; }
+      .post-card { padding: 14px; }
+      .post-header { align-items: flex-start; gap: 8px; flex-wrap: wrap; }
+      .chat-bubble { max-width: 88%; }
+      .site-footer { padding: 18px 12px; }
+      .visitor-counter-pill { flex-wrap: wrap; justify-content: center; }
+
+      .modal-backdrop {
+        align-items: flex-end;
+        padding: 0;
+        padding-top: env(safe-area-inset-top);
+      }
+      .modal-box {
+        width: 100%;
+        max-width: none !important;
+        max-height: 92svh;
+        padding: 18px 14px calc(18px + env(safe-area-inset-bottom));
+        border-radius: 18px 18px 0 0;
+      }
+      #detail-content > div:first-child {
+        grid-template-columns: minmax(88px, 30%) minmax(0, 1fr) !important;
+        gap: 14px !important;
+      }
+      #detail-content > div:first-child > img {
+        width: 100% !important;
+        height: auto !important;
+        aspect-ratio: 9 / 13;
+      }
+      .modal-box form > div[style*="grid-template-columns"] {
+        grid-template-columns: minmax(0, 1fr) !important;
+        gap: 0 !important;
+      }
+      .modal-box input,
+      .modal-box select,
+      .modal-box textarea,
+      .form-row input,
+      .form-row select,
+      .form-row textarea {
+        min-height: 44px;
+        font-size: 16px;
+      }
+      .modal-box textarea { min-height: 96px; }
+      .chili-selector { flex-wrap: wrap; }
+      .chili-btn { min-width: 42px; min-height: 44px; }
+      .inspect-action-bar { margin-top: 20px; padding: 0 12px; }
+      .inspect-action-bar > .btn { flex: 1 1 100%; min-height: 44px; }
+    }
+
+    @media (max-width: 360px) {
+      .nav-actions .btn { padding: 8px; font-size: 0.7rem; }
+      .media-grid { grid-template-columns: minmax(0, 1fr); }
+      .hero { padding: 18px 14px; }
+      .shelf-item { flex-basis: 90px; height: 135px; }
+      #view-community .community-layout > aside > div,
+      #view-inbox .inbox-layout > aside > div,
+      #view-admin .admin-layout > aside > div { grid-template-columns: minmax(0, 1fr); }
+      #inbox-main-content > .glass-panel[style*="height: 600px"] {
+        height: min(600px, calc(100svh - 200px)) !important;
+      }
+      #view-admin,
+      #view-admin .admin-layout,
+      #view-admin .admin-layout > *,
+      #view-admin .glass-panel,
+      #view-admin .glass-panel > * {
+        min-width: 0;
+        max-width: 100%;
+      }
+      #view-admin .admin-layout {
+        grid-template-columns: minmax(0, 1fr) !important;
+      }
+      #view-admin #admin-sec-import > div[style*="grid-template-columns"] {
+        grid-template-columns: minmax(0, 1fr) !important;
+      }
+      #view-admin #bulk-file-input {
+        display: block;
+        width: 100%;
+        min-width: 0;
+        font-size: 0.76rem !important;
+      }
+      #view-admin #bulk-gsheet-url {
+        flex: 1 1 100%;
+        width: 100%;
+      }
+      #view-admin #queue-enrichment-log { overflow-x: auto; }
+      #detail-content > div:first-child { grid-template-columns: 1fr !important; }
+      #detail-content > div:first-child > img {
+        width: min(180px, 60%) !important;
+        justify-self: center;
+      }
+    }
   </style>
 </head>
 <body>
@@ -1451,12 +1740,11 @@
       <div class="hero">
         <div>
           <h1>Check the Heat Before You Dive In.</h1>
-          <p>Crowd-sourced spice ratings (0–5 🌶️), content warnings, and spoiler-safe reviews for books, movies, TV series, and podcasts.</p>
+          <p>Browse community-rated books and media, ranked by spice level. Higher-rated titles lead; ties go to the most-reviewed.</p>
         </div>
         <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
           <div class="view-toggle-wrap">
-            <button class="view-toggle-btn active" id="btn-mode-swarm" onclick="setCatalogViewMode('swarm')">🌌 Swarm</button>
-            <button class="view-toggle-btn" id="btn-mode-shelf" onclick="setCatalogViewMode('shelf')">📚 Shelves</button>
+            <button class="view-toggle-btn active" id="btn-mode-shelf" onclick="setCatalogViewMode('shelf')">📚 Bookshelf</button>
             <button class="view-toggle-btn" id="btn-mode-grid" onclick="setCatalogViewMode('grid')">▦ Grid</button>
           </div>
           <button class="btn btn-fire" onclick="switchView('community')">Join the Lounge 💬</button>
@@ -1486,39 +1774,7 @@
         </select>
       </div>
 
-      <div id="catalog-swarm-controls" class="swarm-controls-bar">
-        <div class="swarm-control-item">
-          <span>🌌 <strong>Gravity:</strong></span>
-          <input type="range" class="swarm-slider" id="slider-gravity" min="0.00005" max="0.0006" step="0.00005" value="0.0002" oninput="updateSwarmPhysics()" />
-        </div>
-        <div class="swarm-control-item">
-          <span>⚡ <strong>Repulsion:</strong></span>
-          <input type="range" class="swarm-slider" id="slider-repulsion" min="30" max="140" step="5" value="75" oninput="updateSwarmPhysics()" />
-        </div>
-        <div class="swarm-control-item">
-          <span>🔗 <strong>Filaments:</strong></span>
-          <input type="range" class="swarm-slider" id="slider-filaments" min="100" max="280" step="10" value="180" oninput="updateSwarmPhysics()" />
-        </div>
-
-        <div class="genre-legend">
-          <span class="legend-chip"><span class="legend-dot" style="background:#ffb703;"></span> Book</span>
-          <span class="legend-chip"><span class="legend-dot" style="background:#00f5d4;"></span> Movie</span>
-          <span class="legend-chip"><span class="legend-dot" style="background:#ff2a54;"></span> TV</span>
-          <span class="legend-chip"><span class="legend-dot" style="background:#9d4edd;"></span> Podcast</span>
-          <span class="legend-chip"><span class="legend-dot" style="background:#70e000;"></span> Game</span>
-        </div>
-      </div>
-
-      <div id="catalog-swarm-stage" class="swarm-stage">
-        <div class="swarm-hud">
-          <div class="swarm-hud-pill">✨ Interactive Media Swarm Active</div>
-          <div class="swarm-hud-pill">🔥 Titles with higher review activity pull nearby items</div>
-        </div>
-        <canvas id="swarm-canvas"></canvas>
-        <div id="swarm-tooltip" class="swarm-tooltip"></div>
-      </div>
-
-      <div id="catalog-shelf-container" class="bookshelf-unit hidden"></div>
+      <div id="catalog-shelf-container" class="bookshelf-unit"></div>
       <div id="catalog-grid" class="media-grid hidden"></div>
     </section>
 
@@ -1764,7 +2020,7 @@
     <div class="inspect-action-bar">
       <button class="btn btn-fire" onclick="toggleBookFlip()">🔄 Flip Front / Back</button>
       <button class="btn" id="inspect-full-details-btn" onclick="openHeldFullDetails()">📖 Reviews & Heat Details</button>
-      <button class="btn" onclick="putMediaBackOnShelf()">⬇️ Return to Swarm</button>
+      <button class="btn" onclick="putMediaBackOnShelf()">⬇️ Return to Bookshelf</button>
     </div>
   </div>
 
@@ -1807,7 +2063,7 @@
         <div class="form-row" id="add-isbn-row"><label>ISBN</label><div style="display: flex; gap: 8px;"><input type="text" id="add-isbn" /><button type="button" class="btn btn-fire" onclick="fetchMetadata()">Auto-Fetch</button></div></div>
         <div class="form-row"><label>Title</label><div style="display: flex; gap: 8px;"><input type="text" id="add-title" required /><button type="button" class="btn" onclick="fetchMetadata()">🔍 Auto-Fill</button></div></div>
         <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 12px;"><div class="form-row"><label>Creator</label><input type="text" id="add-creator" /></div><div class="form-row"><label>Year</label><input type="number" id="add-year" /></div></div>
-        <div class="form-row"><label>Cover Art URL</label><input type="url" id="add-cover" oninput="previewCoverArt(this.value)" /><div style="display: flex; align-items: center; gap: 14px; margin-top: 10px;"><img id="add-cover-preview" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='85' fill='%23151525'%3E%3Crect width='60' height='85'/%3E%3C/svg%3E" style="width: 60px; height: 85px; object-fit: cover; border-radius: 6px; border: 1px solid var(--border-glass);" /><span id="add-cover-status" style="font-size: 0.82rem; color: var(--text-secondary);">Auto-Fetch pulls high-res art.</span></div></div>
+        <div class="form-row"><label>Cover Art URL</label><input type="url" id="add-cover" oninput="previewCoverArt(this.value)" /><div style="display: flex; align-items: center; gap: 14px; margin-top: 10px;"><img id="add-cover-preview" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='85' fill='%23151525'%3E%3Crect width='60' height='85'/%3E%3C/svg%3E" style="width: 60px; height: 85px; object-fit: contain; background: #080811; border-radius: 6px; border: 1px solid var(--border-glass);" /><span id="add-cover-status" style="font-size: 0.82rem; color: var(--text-secondary);">Auto-Fetch pulls high-res art.</span></div></div>
         <div class="form-row"><label>Synopsis</label><textarea id="add-desc" rows="3"></textarea></div>
         <button type="submit" class="btn btn-fire" style="width: 100%;">Save to Catalog & Shelf</button>
       </form>
@@ -1827,7 +2083,7 @@
         <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 12px;"><div class="form-row"><label>Creator</label><input type="text" id="edit-creator" /></div><div class="form-row"><label>Year</label><input type="number" id="edit-year" /></div></div>
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;"><div class="form-row"><label>Catalog Rating (0–5)</label><input type="number" id="edit-catalog-rating" min="0" max="5" step="0.1" /></div><div class="form-row"><label>Genres</label><input type="text" id="edit-genres" /></div></div>
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;"><div class="form-row"><label>Tropes</label><input type="text" id="edit-tropes" /></div><div class="form-row"><label>Tags</label><input type="text" id="edit-tags" /></div></div>
-        <div class="form-row"><label>Cover URL</label><input type="url" id="edit-cover" oninput="previewCoverArt(this.value, 'edit-cover-preview')" /><div style="display: flex; align-items: center; gap: 14px; margin-top: 10px;"><img id="edit-cover-preview" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='85' fill='%23151525'%3E%3Crect width='60' height='85'/%3E%3C/svg%3E" style="width: 60px; height: 85px; object-fit: cover; border-radius: 6px; border: 1px solid var(--border-glass);" /><span id="edit-cover-status" style="font-size: 0.82rem; color: var(--text-secondary);"></span></div></div>
+        <div class="form-row"><label>Cover URL</label><input type="url" id="edit-cover" oninput="previewCoverArt(this.value, 'edit-cover-preview')" /><div style="display: flex; align-items: center; gap: 14px; margin-top: 10px;"><img id="edit-cover-preview" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='85' fill='%23151525'%3E%3Crect width='60' height='85'/%3E%3C/svg%3E" style="width: 60px; height: 85px; object-fit: contain; background: #080811; border-radius: 6px; border: 1px solid var(--border-glass);" /><span id="edit-cover-status" style="font-size: 0.82rem; color: var(--text-secondary);"></span></div></div>
         <div class="form-row"><label>Synopsis</label><textarea id="edit-desc" rows="3"></textarea></div>
         <button type="submit" class="btn btn-fire" style="width: 100%;">Save Changes</button>
       </form>
@@ -1891,6 +2147,7 @@
 
   <script>
     const API = '/api/index.php';
+    const AMAZON_ASSOCIATE_TAG = 'isit2spicy-20';
     let authToken = localStorage.getItem('spicy_jwt') || localStorage.getItem('sublyime_token');
     let currentUser = null;
     let appSettings = { allow_emojis: '1', allow_gifs: '1' };
@@ -1906,7 +2163,7 @@
     let discoveryResults = [];
     let discoveryCatalogResults = [];
 
-    let catalogViewMode = 'swarm';
+    let catalogViewMode = 'shelf';
     let userShelfViewMode = 'shelf';
     let activeInspectedItem = null;
 
@@ -1936,20 +2193,22 @@
 
     const FALLBACK_COVER = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='420' fill='%23121222'%3E%3Crect width='300' height='420'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='%23ff2a54' font-family='sans-serif' font-size='28'%3E🌶️%3C/text%3E%3C/svg%3E";
 
+    function amazonBookUrl(item) {
+      const searchTerm = item.isbn || [item.title, item.creator].filter(Boolean).join(' ');
+      const params = new URLSearchParams({ k: searchTerm, tag: AMAZON_ASSOCIATE_TAG });
+      return `https://www.amazon.com/s?${params.toString()}`;
+    }
+
     window.addEventListener('DOMContentLoaded', async () => {
       initVisitorCounter();
       await fetchSettings();
       if (authToken) await fetchCurrentUser();
       renderHeaderUser();
-      initSwarmCanvas();
       await loadCatalog();
-      // FIX: swarm animation must start on initial load (was missing)
-      if (catalogViewMode === 'swarm') startSwarmAnimation();
 
       window.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') putMediaBackOnShelf();
       });
-      window.addEventListener('resize', resizeSwarmCanvas);
     });
 
     // --- Visitor Counter ---
@@ -1961,20 +2220,24 @@
       const method = hasVisitedSession ? 'GET' : 'POST';
 
       try {
-        const res = await fetch(`${API}?route=/visitors`, { method });
-        if (res.ok) {
-          const data = await res.json();
-          if (!hasVisitedSession) {
-            sessionStorage.setItem('spicy_visited', '1');
-          }
-          const count = Number(data.visitors || 1);
-          displayEl.textContent = count.toLocaleString();
-        } else {
-          displayEl.textContent = '1';
+        const res = await fetch(`${API}?route=/stats/visitors`, { method });
+        if (!res.ok) {
+          throw new Error(`Visitor counter request failed (${res.status}).`);
         }
+
+        const data = await res.json();
+        const count = Number(data.visitors);
+        if (!Number.isFinite(count)) {
+          throw new Error('Visitor counter returned an invalid count.');
+        }
+
+        if (!hasVisitedSession) {
+          sessionStorage.setItem('spicy_visited', '1');
+        }
+        displayEl.textContent = count.toLocaleString();
       } catch (e) {
         console.error('Visitor counter error:', e);
-        displayEl.textContent = '1';
+        displayEl.textContent = '—';
       }
     }
 
@@ -2049,7 +2312,7 @@
         catalogContainer.innerHTML = `<h3 style="margin:12px 0;">Already in the catalog (${catalog.length})</h3>${
           catalog.length ? catalog.map((item, index) => `
             <div class="friend-row" style="gap:12px;">
-              <img src="${escapeHtml(item.coverUrl || FALLBACK_COVER)}" alt="" style="width:54px;height:72px;object-fit:cover;border-radius:6px;" onerror="this.src='${FALLBACK_COVER}'" />
+              <img src="${escapeHtml(item.coverUrl || FALLBACK_COVER)}" alt="" style="width:54px;height:72px;object-fit:contain;border-radius:6px;background:#080811;" onerror="this.src='${FALLBACK_COVER}'" />
               <div style="flex:1;"><strong>${escapeHtml(item.title)}</strong><div style="font-size:.82rem;color:var(--text-secondary);">${escapeHtml(item.kind)}${item.creator ? ` · ${escapeHtml(item.creator)}` : ''}${item.releaseYear ? ` · ${item.releaseYear}` : ''}</div></div>
               <button type="button" class="btn btn-sm" onclick="openDiscoveredCatalogTitle(${index})">View</button>
             </div>`).join('') : '<p style="color:var(--text-secondary);">No matching media in the catalog yet.</p>'
@@ -2060,7 +2323,7 @@
         publicContainer.innerHTML = `<h3 style="margin:18px 0 10px;">Public sources (${additions.length}${alreadyAdded ? ` · ${alreadyAdded} already in catalog` : ''})</h3>${
           additions.length ? additions.map(item => `
             <div class="friend-row" style="gap:12px;">
-              <img src="${escapeHtml(item.coverUrl || FALLBACK_COVER)}" alt="" style="width:54px;height:72px;object-fit:cover;border-radius:6px;" onerror="this.src='${FALLBACK_COVER}'" />
+              <img src="${escapeHtml(item.coverUrl || FALLBACK_COVER)}" alt="" style="width:54px;height:72px;object-fit:contain;border-radius:6px;background:#080811;" onerror="this.src='${FALLBACK_COVER}'" />
               <div style="flex:1;"><strong>${escapeHtml(item.title)}</strong><div style="font-size:.82rem;color:var(--text-secondary);">${escapeHtml(item.kind)}${item.creator ? ` · ${escapeHtml(item.creator)}` : ''}${item.releaseYear ? ` · ${item.releaseYear}` : ''} · ${escapeHtml(item.source || 'Public source')}</div>
                 ${item.description ? `<div style="font-size:.8rem;margin-top:4px;">${escapeHtml(item.description.slice(0, 220))}</div>` : ''}
               </div>
@@ -2221,12 +2484,7 @@
         if (sec) sec.classList.toggle('hidden', v !== view);
         if (tab) tab.classList.toggle('active', v === view);
       });
-      if (view === 'catalog') {
-        loadCatalog();
-        if (catalogViewMode === 'swarm') startSwarmAnimation();
-      } else {
-        stopSwarmAnimation();
-      }
+      if (view === 'catalog') loadCatalog();
       if (view === 'community') { populatePostTitleSelect(); loadCommunityPosts(''); }
       if (view === 'members') loadMembersDirectory();
       if (view === 'library') { if (!currentUser) { openAuthModal(); return; } openUserShelf(currentUser.id); }
@@ -2714,7 +2972,7 @@
       }
     }
 
-    // --- Catalog & Swarm ---
+    // --- Catalog ranking ---
     function renderSpiceMeter(spiceVal) {
       const level = spiceVal !== null && spiceVal !== undefined ? Math.round(Number(spiceVal)) : 0;
       let bars = '';
@@ -2725,18 +2983,14 @@
     function debounceCatalog() { clearTimeout(searchTimer); searchTimer = setTimeout(loadCatalog, 280); }
 
     function setCatalogViewMode(mode) {
+      if (!['shelf', 'grid'].includes(mode)) return;
       catalogViewMode = mode;
-      document.getElementById('btn-mode-swarm').classList.toggle('active', mode === 'swarm');
       document.getElementById('btn-mode-shelf').classList.toggle('active', mode === 'shelf');
       document.getElementById('btn-mode-grid').classList.toggle('active', mode === 'grid');
 
-      document.getElementById('catalog-swarm-stage').classList.toggle('hidden', mode !== 'swarm');
-      document.getElementById('catalog-swarm-controls').classList.toggle('hidden', mode !== 'swarm');
       document.getElementById('catalog-shelf-container').classList.toggle('hidden', mode !== 'shelf');
       document.getElementById('catalog-grid').classList.toggle('hidden', mode !== 'grid');
 
-      if (mode === 'swarm') { resizeSwarmCanvas(); startSwarmAnimation(); }
-      else stopSwarmAnimation();
       renderCatalogView();
     }
 
@@ -2750,26 +3004,43 @@
 
       const res = await fetch(url);
       catalogCache = (await res.json()).titles || [];
-      initSwarmNodes(catalogCache);
       renderCatalogView();
     }
 
     function renderCatalogView() {
       const grid = document.getElementById('catalog-grid');
       const shelfContainer = document.getElementById('catalog-shelf-container');
+      const rankedTitles = [...catalogCache].sort((a, b) => {
+        const spiceA = a.averageSpice === null || a.averageSpice === undefined || a.averageSpice === ''
+          ? -1
+          : Number(a.averageSpice);
+        const spiceB = b.averageSpice === null || b.averageSpice === undefined || b.averageSpice === ''
+          ? -1
+          : Number(b.averageSpice);
+        const normalizedSpiceA = Number.isFinite(spiceA) ? spiceA : -1;
+        const normalizedSpiceB = Number.isFinite(spiceB) ? spiceB : -1;
+        if (normalizedSpiceA !== normalizedSpiceB) return normalizedSpiceB - normalizedSpiceA;
 
-      if (catalogCache.length === 0) {
+        const reviewsA = Number(a.reviewCount) || 0;
+        const reviewsB = Number(b.reviewCount) || 0;
+        if (reviewsA !== reviewsB) return reviewsB - reviewsA;
+
+        return (Number(b.averageRating) || 0) - (Number(a.averageRating) || 0);
+      });
+
+      if (rankedTitles.length === 0) {
         grid.innerHTML = `<div class="glass-panel" style="grid-column: 1/-1; text-align: center;">No media matched your filter. Click <strong>+ Add Media</strong> to add it!</div>`;
         shelfContainer.innerHTML = `<div style="text-align: center; padding: 40px; color: var(--text-secondary);">No media on the shelves right now. Add one above!</div>`;
         return;
       }
 
-      grid.innerHTML = catalogCache.map(item => `
+      grid.innerHTML = rankedTitles.map((item, index) => `
         <div class="media-card" onclick="pullMediaIntoView(${item.id})">
           <div class="card-cover-wrap"><img class="card-cover" src="${escapeHtml(item.coverUrl || FALLBACK_COVER)}" loading="lazy" onerror="this.src='${FALLBACK_COVER}'" />
             <span class="kind-pill">${escapeHtml(item.kind)}</span><div class="spice-badge-overlay">${renderChilis(item.averageSpice)}</div>
           </div>
           <div class="card-body">
+            <div class="catalog-rank">HEAT RANK #${index + 1}</div>
             <div class="card-title">${escapeHtml(item.title)}</div><div class="card-creator">${item.creator ? renderDiscoveryLink('creator', item.creator, item.kind, item.creator) : 'Unknown'} ${item.releaseYear ? `• ${item.releaseYear}` : ''}</div>
             ${item.genres ? `<div style="display:flex;flex-wrap:wrap;margin:-6px 0 8px;">${renderGenreDiscoveryLinks(item.genres)}</div>` : ''}
             ${renderSpiceMeter(item.averageSpice)}
@@ -2779,7 +3050,7 @@
           </div>
         </div>`).join('');
 
-      renderShelvesToContainer(shelfContainer, catalogCache, false);
+      renderShelvesToContainer(shelfContainer, rankedTitles, false);
     }
 
     // ==========================================
@@ -3126,11 +3397,14 @@
             ${tier.map((item, i) => {
               const id = item.titleId || item.id;
               const spice = item.averageSpice ?? item.userSpice;
+              const label = isPersonalShelf
+                ? (spice !== null && spice !== undefined ? `${Number(spice).toFixed(1)} 🌶️` : '✨')
+                : `#${idx * chunkSize + i + 1} · ${spice !== null && spice !== undefined ? `${Number(spice).toFixed(1)} 🌶️` : 'Unrated'}`;
               return `
                 <div class="shelf-item" style="animation-delay: ${i * 0.03}s;" data-id="${id}" onclick="pullMediaIntoView(${id})" title="Click to inspect front & back cover">
                   <div class="shelf-item-spine">
                     <img class="shelf-item-cover" src="${escapeHtml(item.coverUrl || FALLBACK_COVER)}" loading="lazy" onerror="this.src='${FALLBACK_COVER}'" />
-                    <span class="shelf-item-tag">${spice !== null && spice !== undefined ? `${Number(spice).toFixed(1)} 🌶️` : '✨'}</span>
+                    <span class="shelf-item-tag">${label}</span>
                   </div>
                 </div>
               `;
@@ -3245,6 +3519,7 @@
             </div>` : ''}
             <p style="color: var(--text-secondary); font-size: 0.92rem; line-height: 1.55; margin-bottom: 14px;">${formatContent(item.description || 'No synopsis added yet.')}</p>
             <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+              ${item.kind === 'book' ? `<div style="display: flex; flex-direction: column; gap: 5px;"><a class="btn btn-fire btn-sm" href="${amazonBookUrl(item)}" target="_blank" rel="sponsored noopener noreferrer">🛒 Buy on Amazon</a><span style="font-size: 0.72rem; color: var(--text-secondary);">As an Amazon Associate I earn from qualifying purchases.</span></div>` : ''}
               <button class="btn btn-sm" onclick="closeDetailModal(); pullMediaIntoView(${titleId});">🔍 Inspect 3D Cover</button>
               <button class="btn btn-fire btn-sm" onclick="quickAddShelf(${titleId})">📚 Add to My Shelf</button>
               ${currentUser && currentUser.role === 'admin' ? `<button class="btn btn-sm" style="color:var(--neon-cyan); border-color:var(--neon-cyan);" onclick="openEditTitleModal(${titleId})">✏️ Edit</button><button class="btn btn-sm" style="color:var(--neon-crimson); border-color:var(--border-neon);" onclick="deleteTitle(${titleId})">🗑️ Delete</button>` : ''}
@@ -3386,8 +3661,6 @@
         const sec = document.getElementById(`view-${v}`); const tab = document.getElementById(`tab-${v}`);
         if (sec) sec.classList.toggle('hidden', v !== 'library'); if (tab) tab.classList.toggle('active', v === 'library');
       });
-      stopSwarmAnimation();
-
       const res = await fetch(`${API}?route=${encodeURIComponent(`/users/${userId}/library`)}`, { headers: authToken ? { 'Authorization': `Bearer ${authToken}` } : {} });
       const data = await res.json();
       if (!res.ok) { alert(data.error || 'Could not load shelf'); return; }
