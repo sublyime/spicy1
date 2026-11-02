@@ -48,6 +48,27 @@ CREATE TABLE IF NOT EXISTS reviews (
   CONSTRAINT chk_reviews_spice CHECK (spice_level BETWEEN 0 AND 5)
 );
 
+CREATE TABLE IF NOT EXISTS friendships (
+  requester_id BIGINT UNSIGNED NOT NULL,
+  addressee_id BIGINT UNSIGNED NOT NULL,
+  status ENUM('pending', 'accepted') NOT NULL DEFAULT 'pending',
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (requester_id, addressee_id),
+  KEY idx_friendships_addressee_status (addressee_id, status),
+  CONSTRAINT fk_friendships_requester FOREIGN KEY (requester_id) REFERENCES users(id) ON DELETE CASCADE,
+  CONSTRAINT fk_friendships_addressee FOREIGN KEY (addressee_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS user_blocks (
+  blocker_id BIGINT UNSIGNED NOT NULL,
+  blocked_id BIGINT UNSIGNED NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (blocker_id, blocked_id),
+  CONSTRAINT fk_user_blocks_blocker FOREIGN KEY (blocker_id) REFERENCES users(id) ON DELETE CASCADE,
+  CONSTRAINT fk_user_blocks_blocked FOREIGN KEY (blocked_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
 INSERT IGNORE INTO titles (id, title, kind, creator, release_year, description) VALUES
   (1, 'The House in the Cerulean Sea', 'book', 'TJ Klune', 2020, 'A warm-hearted fantasy about found family and making room for a little magic.'),
   (2, 'Pride & Prejudice', 'book', 'Jane Austen', 1813, 'A sparkling classic about first impressions, family, and finding your person.'),

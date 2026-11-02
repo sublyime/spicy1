@@ -1,0 +1,2735 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name='impact-site-verification' value='ab3d8728-e6fa-4d88-b01d-9ee3e46f4d07'>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>IS IT TOO SPICY? — Futuristic Media Spice & Community Hub</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <!-- SheetJS CDN for modern Excel (.xlsx / .xls) parsing client-side -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <style>
+    :root {
+      --bg-deep: #06060c;
+      --bg-surface: rgba(18, 18, 30, 0.72);
+      --bg-glass: rgba(26, 26, 44, 0.65);
+      --border-glass: rgba(255, 255, 255, 0.09);
+      --border-neon: rgba(255, 42, 84, 0.45);
+      --text-primary: #f8f9fc;
+      --text-secondary: #9aa1b9;
+      --neon-crimson: #ff2a54;
+      --neon-orange: #ff6b2b;
+      --neon-violet: #9d4edd;
+      --neon-cyan: #00f5d4;
+      --neon-gold: #ffb703;
+      --neon-lime: #70e000;
+      --grad-fire: linear-gradient(135deg, #ff2a54 0%, #ff6b2b 50%, #ffb703 100%);
+      --grad-cyber: linear-gradient(135deg, #ff2a54 0%, #9d4edd 100%);
+      --shadow-neon: 0 0 25px rgba(255, 42, 84, 0.3);
+      --radius-lg: 18px;
+      --radius-md: 12px;
+      --radius-sm: 8px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background-color: var(--bg-deep);
+      background-image: 
+        radial-gradient(circle at 12% 15%, rgba(255, 42, 84, 0.14) 0%, transparent 38%),
+        radial-gradient(circle at 88% 20%, rgba(157, 78, 221, 0.15) 0%, transparent 42%),
+        radial-gradient(circle at 50% 85%, rgba(255, 107, 43, 0.08) 0%, transparent 45%);
+      background-attachment: fixed;
+      color: var(--text-primary);
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    h1, h2, h3, h4, .brand-font {
+      font-family: 'Outfit', sans-serif;
+      letter-spacing: -0.02em;
+    }
+
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 200;
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      background: rgba(8, 8, 16, 0.78);
+      border-bottom: 1px solid var(--border-glass);
+      padding: 14px 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .brand-icon {
+      width: 42px;
+      height: 42px;
+      border-radius: 12px;
+      background: var(--grad-fire);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.4rem;
+      box-shadow: var(--shadow-neon);
+    }
+
+    .brand-title {
+      font-size: 1.45rem;
+      font-weight: 800;
+      background: var(--grad-fire);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .nav-tabs {
+      display: flex;
+      gap: 8px;
+      background: rgba(255, 255, 255, 0.04);
+      padding: 5px;
+      border-radius: 999px;
+      border: 1px solid var(--border-glass);
+      flex-wrap: wrap;
+    }
+
+    .nav-tab {
+      background: transparent;
+      border: none;
+      color: var(--text-secondary);
+      padding: 8px 18px;
+      border-radius: 999px;
+      font-weight: 600;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: all 0.22s ease;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .nav-tab:hover { color: var(--text-primary); }
+    .nav-tab.active {
+      background: var(--grad-fire);
+      color: #fff;
+      box-shadow: 0 4px 16px rgba(255, 42, 84, 0.35);
+    }
+
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .btn {
+      padding: 9px 18px;
+      border-radius: 10px;
+      font-weight: 600;
+      font-size: 0.9rem;
+      border: 1px solid var(--border-glass);
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text-primary);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .btn:hover {
+      background: rgba(255, 255, 255, 0.12);
+      border-color: rgba(255, 255, 255, 0.2);
+      transform: translateY(-1px);
+    }
+    .btn-fire {
+      background: var(--grad-fire);
+      border: none;
+      color: #fff;
+      box-shadow: 0 4px 20px rgba(255, 42, 84, 0.35);
+    }
+    .btn-fire:hover {
+      box-shadow: 0 6px 26px rgba(255, 42, 84, 0.55);
+      filter: brightness(1.08);
+    }
+    .btn-sm { padding: 6px 12px; font-size: 0.8rem; border-radius: 8px; }
+
+    .user-pill {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 5px 14px 5px 6px;
+      border-radius: 999px;
+      background: rgba(255, 42, 84, 0.12);
+      border: 1px solid var(--border-neon);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .user-pill:hover {
+      background: rgba(255, 42, 84, 0.22);
+      box-shadow: var(--shadow-neon);
+    }
+    .user-avatar {
+      border-radius: 50%;
+      background: var(--grad-cyber);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      color: #fff;
+      object-fit: cover;
+      flex-shrink: 0;
+    }
+
+    .container {
+      max-width: 1340px;
+      margin: 0 auto;
+      padding: 28px 24px 80px;
+    }
+
+    .hero {
+      background: linear-gradient(125deg, rgba(255, 42, 84, 0.16) 0%, rgba(157, 78, 221, 0.14) 55%, rgba(18, 18, 30, 0.85) 100%);
+      border: 1px solid var(--border-neon);
+      border-radius: var(--radius-lg);
+      padding: 30px 34px;
+      margin-bottom: 22px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+    }
+    .hero h1 { font-size: 2.1rem; font-weight: 800; margin-bottom: 8px; line-height: 1.15; }
+    .hero p { color: var(--text-secondary); max-width: 620px; font-size: 0.98rem; line-height: 1.5; }
+
+    .filter-bar {
+      background: var(--bg-surface);
+      backdrop-filter: blur(16px);
+      border: 1px solid var(--border-glass);
+      border-radius: var(--radius-md);
+      padding: 14px 18px;
+      margin-bottom: 22px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px;
+      align-items: center;
+    }
+    .search-box { flex: 1; min-width: 240px; }
+    .search-box input, .select-input {
+      width: 100%;
+      background: rgba(8, 8, 16, 0.85);
+      border: 1px solid var(--border-glass);
+      color: var(--text-primary);
+      padding: 10px 14px;
+      border-radius: 10px;
+      font-size: 0.92rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .search-box input:focus, .select-input:focus { border-color: var(--neon-crimson); box-shadow: 0 0 12px rgba(255, 42, 84, 0.25); }
+
+    .view-toggle-wrap {
+      display: inline-flex;
+      background: rgba(0,0,0,0.4);
+      padding: 3px;
+      border-radius: 10px;
+      border: 1px solid var(--border-glass);
+    }
+    .view-toggle-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-secondary);
+      padding: 6px 12px;
+      font-size: 0.82rem;
+      border-radius: 7px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.2s;
+    }
+    .view-toggle-btn.active {
+      background: rgba(255, 42, 84, 0.25);
+      color: #fff;
+      border: 1px solid var(--border-neon);
+    }
+
+    /* --- Swarm Physics Controls Bar --- */
+    .swarm-controls-bar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 16px;
+      background: rgba(14, 13, 26, 0.85);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--border-glass);
+      border-radius: 12px;
+      padding: 10px 18px;
+      margin-bottom: 14px;
+      font-size: 0.82rem;
+    }
+    .swarm-control-item { display: flex; align-items: center; gap: 8px; }
+    .swarm-slider {
+      -webkit-appearance: none;
+      appearance: none;
+      height: 6px;
+      border-radius: 4px;
+      background: rgba(255,255,255,0.15);
+      outline: none;
+      width: 100px;
+    }
+    .swarm-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: var(--neon-crimson);
+      cursor: pointer;
+      box-shadow: 0 0 8px var(--neon-crimson);
+    }
+
+    .genre-legend {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-left: auto;
+      flex-wrap: wrap;
+    }
+    .legend-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 0.74rem;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: rgba(0,0,0,0.5);
+      border: 1px solid var(--border-glass);
+    }
+    .legend-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+
+    /* --- Media Swarm Canvas & Stage UI --- */
+    .swarm-stage {
+      position: relative;
+      width: 100%;
+      height: 660px;
+      background: radial-gradient(circle at center, #100f20 0%, #05050b 100%);
+      border: 1px solid var(--border-neon);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      box-shadow: inset 0 0 70px rgba(0,0,0,0.92), var(--shadow-neon);
+      margin-bottom: 28px;
+      cursor: grab;
+    }
+    .swarm-stage:active { cursor: grabbing; }
+
+    #swarm-canvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .swarm-hud {
+      position: absolute;
+      top: 14px;
+      left: 18px;
+      pointer-events: none;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      z-index: 10;
+    }
+    .swarm-hud-pill {
+      background: rgba(8, 8, 16, 0.85);
+      backdrop-filter: blur(8px);
+      border: 1px solid var(--border-glass);
+      padding: 5px 12px;
+      border-radius: 999px;
+      font-size: 0.76rem;
+      color: var(--text-secondary);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      width: fit-content;
+    }
+
+    .swarm-tooltip {
+      position: absolute;
+      pointer-events: none;
+      background: rgba(10, 10, 20, 0.94);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--border-neon);
+      border-radius: 10px;
+      padding: 9px 14px;
+      font-size: 0.84rem;
+      color: #fff;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.85);
+      z-index: 25;
+      transform: translate(-50%, -125%);
+      transition: opacity 0.15s ease;
+      opacity: 0;
+      white-space: nowrap;
+    }
+
+    /* --- Bookshelves --- */
+    .bookshelf-unit {
+      background: linear-gradient(180deg, #15111c 0%, #0d0a14 100%);
+      border: 6px solid #2a1f33;
+      border-radius: 16px;
+      box-shadow: inset 0 0 50px rgba(0,0,0,0.85), 0 20px 50px rgba(0,0,0,0.7);
+      padding: 24px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 40px;
+      margin-bottom: 28px;
+      position: relative;
+    }
+    .shelf-row { position: relative; display: flex; flex-direction: column; }
+    .shelf-scroll-area {
+      display: flex; gap: 24px; overflow-x: auto; overflow-y: hidden;
+      padding: 10px 24px 0 24px; cursor: grab; user-select: none; align-items: flex-end;
+      scrollbar-width: thin; scrollbar-color: var(--neon-crimson) rgba(0,0,0,0.4);
+    }
+    .shelf-scroll-area:active { cursor: grabbing; }
+    .shelf-scroll-area::-webkit-scrollbar { height: 6px; }
+    .shelf-scroll-area::-webkit-scrollbar-thumb { background: var(--neon-crimson); border-radius: 10px; }
+    .shelf-wood-plank {
+      height: 22px; background: linear-gradient(180deg, #6c472f 0%, #442a17 50%, #29180b 100%);
+      border-top: 2px solid #a87955; border-bottom: 4px solid #140b04;
+      box-shadow: 0 10px 20px rgba(0,0,0,0.8), inset 0 2px 2px rgba(255,255,255,0.3);
+      position: relative; border-radius: 3px; margin-top: -2px; z-index: 2;
+    }
+    .shelf-wood-plank::after {
+      content: ""; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+      background: rgba(255, 42, 84, 0.45); box-shadow: 0 0 10px rgba(255, 42, 84, 0.6);
+    }
+    .shelf-item {
+      flex: 0 0 140px; height: 210px; perspective: 800px; cursor: pointer; position: relative;
+      transition: transform 0.25s ease, filter 0.2s ease; transform-origin: bottom center;
+      display: flex; flex-direction: column; justify-content: flex-end;
+    }
+    .shelf-item:hover {
+      transform: translateY(-16px) scale(1.06); z-index: 10;
+      filter: drop-shadow(0 12px 20px rgba(255, 42, 84, 0.45));
+    }
+    .shelf-item-spine {
+      width: 100%; height: 100%; border-radius: 4px 6px 6px 4px; overflow: hidden;
+      background: #111; border: 1px solid rgba(255,255,255,0.12);
+      box-shadow: -4px 6px 14px rgba(0,0,0,0.7), inset 4px 0 8px rgba(0,0,0,0.5); position: relative;
+    }
+    .shelf-item-cover { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .shelf-item-tag {
+      position: absolute; top: 6px; right: 6px; background: rgba(0,0,0,0.85);
+      border: 1px solid var(--border-neon); border-radius: 6px; padding: 2px 5px; font-size: 0.65rem; font-weight: 800; color: #fff;
+    }
+
+    /* --- Floating 3D Inspection Stage --- */
+    .inspect-overlay-stage {
+      position: fixed; inset: 0; background: radial-gradient(circle at center, rgba(16, 14, 28, 0.94) 0%, rgba(3, 3, 6, 0.98) 100%);
+      backdrop-filter: blur(14px); z-index: 1200; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; perspective: 1400px; opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
+    }
+    .inspect-overlay-stage.active { opacity: 1; pointer-events: auto; }
+    .inspect-rig-container {
+      position: relative; width: 320px; height: 470px; perspective: 1200px; transform-style: preserve-3d;
+      animation: pullForward 0.55s cubic-bezier(0.18, 0.89, 0.32, 1.25) forwards; cursor: pointer;
+    }
+    @keyframes pullForward {
+      0% { transform: translate3d(0, 180px, -350px) rotateX(25deg) scale(0.7); opacity: 0; }
+      100% { transform: translate3d(0, 0, 0) rotateX(6deg) rotateY(-6deg) scale(1); opacity: 1; }
+    }
+    .held-book-card {
+      width: 100%; height: 100%; position: relative; transform-style: preserve-3d;
+      transition: transform 0.75s cubic-bezier(0.175, 0.885, 0.32, 1.275); border-radius: 14px;
+      box-shadow: 0 35px 80px rgba(0,0,0,0.85), 0 0 35px rgba(255, 42, 84, 0.3);
+    }
+    .held-book-card.is-flipped { transform: rotateY(180deg); }
+    .held-card-face {
+      position: absolute; inset: 0; backface-visibility: hidden; border-radius: 14px; overflow: hidden;
+      border: 2px solid rgba(255, 255, 255, 0.15); background: #0f0f1b; display: flex; flex-direction: column;
+    }
+    .held-card-front { z-index: 2; transform: rotateY(0deg); }
+    .held-card-back {
+      transform: rotateY(180deg); background: linear-gradient(145deg, #16162a 0%, #0e0e1a 100%);
+      padding: 24px; display: flex; flex-direction: column; justify-content: space-between; border: 2px solid var(--border-neon);
+    }
+    .held-card-front img { width: 100%; height: 100%; object-fit: cover; }
+    .inspect-pedestal-light {
+      position: absolute; bottom: -40px; left: 50%; transform: translateX(-50%); width: 260px; height: 25px;
+      background: radial-gradient(ellipse at center, rgba(255, 42, 84, 0.5) 0%, rgba(157, 78, 221, 0.2) 60%, transparent 80%);
+      border-radius: 50%; filter: blur(8px); pointer-events: none;
+    }
+    .inspect-action-bar { margin-top: 36px; display: flex; gap: 14px; z-index: 50; flex-wrap: wrap; justify-content: center; }
+
+    /* Standard Grid Style */
+    .media-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(235px, 1fr)); gap: 22px; }
+    .media-card {
+      background: var(--bg-surface); backdrop-filter: blur(14px); border: 1px solid var(--border-glass);
+      border-radius: var(--radius-lg); overflow: hidden; display: flex; flex-direction: column;
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1); position: relative; cursor: pointer;
+    }
+    .media-card:hover {
+      transform: translateY(-6px); border-color: var(--border-neon);
+      box-shadow: 0 14px 34px rgba(0, 0, 0, 0.55), 0 0 22px rgba(255, 42, 84, 0.22);
+    }
+    .card-cover-wrap {
+      position: relative; width: 100%; aspect-ratio: 2 / 3; background: #080811;
+      overflow: hidden; display: flex; align-items: center; justify-content: center;
+    }
+    .card-cover { width: 100%; height: 100%; object-fit: contain; transition: transform 0.4s ease; }
+    .media-card:hover .card-cover { transform: scale(1.05); }
+
+    .kind-pill {
+      position: absolute; top: 12px; left: 12px; background: rgba(8, 8, 16, 0.82);
+      backdrop-filter: blur(8px); border: 1px solid rgba(255, 255, 255, 0.15);
+      padding: 4px 10px; border-radius: 999px; font-size: 0.72rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.06em; color: var(--neon-cyan);
+    }
+    .spice-badge-overlay {
+      position: absolute; bottom: 10px; right: 10px; background: rgba(10, 10, 18, 0.88);
+      backdrop-filter: blur(8px); border: 1px solid var(--border-neon); padding: 5px 10px;
+      border-radius: 999px; font-size: 0.82rem; font-weight: 700; color: #fff;
+      display: flex; align-items: center; gap: 4px; box-shadow: 0 4px 14px rgba(0,0,0,0.5);
+    }
+    .card-body { padding: 16px; display: flex; flex-direction: column; flex: 1; }
+    .card-title { font-size: 1.05rem; font-weight: 700; margin-bottom: 4px; line-height: 1.3; }
+    .card-creator { font-size: 0.84rem; color: var(--text-secondary); margin-bottom: 12px; }
+    .spice-meter-bar { display: flex; gap: 3px; margin-bottom: 12px; }
+    .spice-seg { height: 5px; flex: 1; border-radius: 4px; background: rgba(255, 255, 255, 0.1); }
+    .spice-seg.hot { background: var(--grad-fire); box-shadow: 0 0 8px rgba(255, 42, 84, 0.5); }
+    .card-footer {
+      margin-top: auto; display: flex; align-items: center; justify-content: space-between;
+      padding-top: 10px; border-top: 1px solid rgba(255, 255, 255, 0.06); font-size: 0.82rem;
+    }
+    .rating-stars { color: var(--neon-gold); font-weight: 700; }
+
+    .glass-panel {
+      background: var(--bg-surface); backdrop-filter: blur(16px);
+      border: 1px solid var(--border-glass); border-radius: var(--radius-lg); padding: 22px;
+    }
+    .chat-gif { max-width: 250px; max-height: 250px; border-radius: 8px; margin-top: 8px; border: 1px solid var(--border-neon); display: block; }
+
+    .community-layout, .inbox-layout, .admin-layout { display: grid; grid-template-columns: 280px 1fr; gap: 24px; }
+    @media (max-width: 860px) { .community-layout, .inbox-layout, .admin-layout { grid-template-columns: 1fr; } }
+
+    .post-card { background: var(--bg-surface); border: 1px solid var(--border-glass); border-radius: var(--radius-lg); padding: 22px; margin-bottom: 18px; transition: border-color 0.2s; }
+    .post-card:hover { border-color: rgba(255, 42, 84, 0.35); }
+    .post-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+    .post-author { display: flex; align-items: center; gap: 10px; cursor: pointer; }
+    .role-tag { font-size: 0.68rem; padding: 2px 8px; border-radius: 99px; font-weight: 700; text-transform: uppercase; }
+    .role-admin { background: rgba(255, 42, 84, 0.2); color: var(--neon-crimson); border: 1px solid var(--neon-crimson); }
+    .role-moderator { background: rgba(0, 245, 212, 0.15); color: var(--neon-cyan); border: 1px solid var(--neon-cyan); }
+    .role-member { background: rgba(255, 255, 255, 0.08); color: var(--text-secondary); }
+
+    .linked-media-chip {
+      display: inline-flex; align-items: center; gap: 10px; background: rgba(255, 42, 84, 0.1);
+      border: 1px solid var(--border-neon); padding: 6px 12px; border-radius: 10px; margin: 10px 0; font-size: 0.85rem; cursor: pointer;
+    }
+    .comment-list { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--border-glass); display: flex; flex-direction: column; gap: 10px; }
+    .comment-item { background: rgba(8, 8, 16, 0.55); padding: 10px 14px; border-radius: 10px; font-size: 0.88rem; }
+    .chat-bubble { max-width: 75%; padding: 10px 14px; border-radius: 14px; margin-bottom: 8px; font-size: 0.92rem; line-height: 1.4; }
+    .chat-bubble.sent { background: var(--grad-fire); color: #fff; align-self: flex-end; border-bottom-right-radius: 2px; }
+    .chat-bubble.received { background: rgba(255,255,255,0.1); color: var(--text-primary); align-self: flex-start; border-bottom-left-radius: 2px; border: 1px solid var(--border-glass); }
+    .friend-row { display: flex; align-items: center; justify-content: space-between; padding: 10px; border: 1px solid var(--border-glass); border-radius: 10px; margin-bottom: 8px; background: rgba(8, 8, 16, 0.5); }
+    .inbox-row { display: flex; align-items: center; gap: 12px; padding: 14px; border: 1px solid var(--border-glass); border-radius: 12px; margin-bottom: 10px; background: var(--bg-surface); cursor: pointer; transition: background 0.2s; }
+    .inbox-row:hover { background: rgba(255,255,255,0.05); }
+
+    /* Modals */
+    .modal-backdrop { position: fixed; inset: 0; background: rgba(4, 4, 10, 0.85); backdrop-filter: blur(10px); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 20px; }
+    .modal-box { background: #10101e; border: 1px solid var(--border-neon); border-radius: var(--radius-lg); width: 100%; max-width: 680px; max-height: 90vh; overflow-y: auto; padding: 28px; box-shadow: 0 24px 60px rgba(0, 0, 0, 0.8), var(--shadow-neon); }
+    .form-row { margin-bottom: 16px; }
+    .form-row label { display: block; font-size: 0.84rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px; }
+    .form-row input, .form-row select, .form-row textarea { width: 100%; background: #080811; border: 1px solid var(--border-glass); color: var(--text-primary); padding: 11px 14px; border-radius: 10px; font-size: 0.92rem; font-family: inherit; }
+    .chili-selector { display: flex; gap: 8px; }
+    .chili-btn { flex: 1; padding: 10px; border-radius: 10px; border: 1px solid var(--border-glass); background: #080811; color: var(--text-secondary); cursor: pointer; text-align: center; font-weight: 700; transition: all 0.18s; }
+    .chili-btn.selected { background: rgba(255, 42, 84, 0.22); border-color: var(--neon-crimson); color: #fff; box-shadow: var(--shadow-neon); }
+    .spoiler-blur { filter: blur(6px); cursor: pointer; user-select: none; transition: filter 0.2s; }
+    .spoiler-blur.revealed { filter: none; }
+    .hidden { display: none !important; }
+    
+    .toggle-switch { position: relative; display: inline-block; width: 48px; height: 24px; }
+    .toggle-switch input { opacity: 0; width: 0; height: 0; }
+    .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #080811; border: 1px solid var(--border-glass); border-radius: 24px; transition: .3s; }
+    .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 3px; bottom: 3px; background-color: var(--text-secondary); border-radius: 50%; transition: .3s; }
+    input:checked + .slider { background-color: rgba(255, 42, 84, 0.3); border-color: var(--neon-crimson); }
+    input:checked + .slider:before { transform: translateX(24px); background-color: var(--neon-crimson); box-shadow: 0 0 8px var(--neon-crimson); }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="brand" onclick="switchView('catalog')">
+      <div class="brand-icon">🌶️</div>
+      <div>
+        <div class="brand-title">Is It Too Spicy?</div>
+        <div style="font-size: 0.72rem; color: var(--text-secondary);">Media Heat Index & Community Lounge</div>
+      </div>
+    </div>
+
+    <nav class="nav-tabs">
+      <button class="nav-tab active" id="tab-catalog" onclick="switchView('catalog')">🔥 Spice Catalog</button>
+      <button class="nav-tab" id="tab-community" onclick="switchView('community')">💬 Community Lounge</button>
+      <button class="nav-tab" id="tab-members" onclick="switchView('members')">👥 Members & Libraries</button>
+      <button class="nav-tab hidden" id="tab-inbox" onclick="switchView('inbox')">✉️ Inbox</button>
+      <button class="nav-tab" id="tab-library" onclick="switchView('library')">📚 My Shelf</button>
+      <button class="nav-tab hidden" id="tab-admin" onclick="switchView('admin')">🛡️ Admin</button>
+    </nav>
+
+    <div class="nav-actions">
+      <button class="btn btn-fire" onclick="openAddTitleModal()">+ Add Media</button>
+      <div id="nav-user-slot">
+        <button class="btn" onclick="openAuthModal()">Sign In</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="container">
+
+    <!-- VIEW 1: SPICE CATALOG (MEDIA SWARM BY DEFAULT) -->
+    <section id="view-catalog">
+      <div class="hero">
+        <div>
+          <h1>Check the Heat Before You Dive In.</h1>
+          <p>Crowd-sourced spice ratings (0–5 🌶️), content warnings, and spoiler-safe reviews for books, movies, TV series, and podcasts.</p>
+        </div>
+        <div style="display: flex; gap: 12px; align-items: center;">
+          <div class="view-toggle-wrap">
+            <button class="view-toggle-btn active" id="btn-mode-swarm" onclick="setCatalogViewMode('swarm')">🌌 Swarm</button>
+            <button class="view-toggle-btn" id="btn-mode-shelf" onclick="setCatalogViewMode('shelf')">📚 Shelves</button>
+            <button class="view-toggle-btn" id="btn-mode-grid" onclick="setCatalogViewMode('grid')">▦ Grid</button>
+          </div>
+          <button class="btn btn-fire" onclick="switchView('community')">Join the Lounge 💬</button>
+        </div>
+      </div>
+
+      <div class="filter-bar">
+        <div class="search-box">
+          <input type="text" id="catalog-search" placeholder="Search by title, author, director, or ISBN..." oninput="debounceCatalog()" />
+        </div>
+        <select id="catalog-kind" class="select-input" style="width: 170px;" onchange="loadCatalog()">
+          <option value="">All Media Types</option>
+          <option value="book">📚 Books</option>
+          <option value="movie">🎬 Movies</option>
+          <option value="tv">📺 TV Series</option>
+          <option value="podcast">🎙️ Podcasts</option>
+          <option value="game">🎮 Games</option>
+        </select>
+        <select id="catalog-spice" class="select-input" style="width: 190px;" onchange="loadCatalog()">
+          <option value="">Any Spice Level (0–5 🌶️)</option>
+          <option value="0">0 🌶️ — Clean / Sweet</option>
+          <option value="1">1+ 🌶️ — Mild Glimpse</option>
+          <option value="2">2+ 🌶️ — Warm / Steamy</option>
+          <option value="3">3+ 🌶️ — Spicy</option>
+          <option value="4">4+ 🌶️ — Scorching</option>
+          <option value="5">5 🌶️ — Five-Alarm Fire</option>
+        </select>
+      </div>
+
+      <!-- SWARM PHYSICS & TUNING CONTROLS HUD -->
+      <div id="catalog-swarm-controls" class="swarm-controls-bar">
+        <div class="swarm-control-item">
+          <span>🌌 <strong>Gravity:</strong></span>
+          <input type="range" class="swarm-slider" id="slider-gravity" min="0.00005" max="0.0006" step="0.00005" value="0.0002" oninput="updateSwarmPhysics()" />
+        </div>
+        <div class="swarm-control-item">
+          <span>⚡ <strong>Repulsion:</strong></span>
+          <input type="range" class="swarm-slider" id="slider-repulsion" min="30" max="140" step="5" value="75" oninput="updateSwarmPhysics()" />
+        </div>
+        <div class="swarm-control-item">
+          <span>🔗 <strong>Filament Reach:</strong></span>
+          <input type="range" class="swarm-slider" id="slider-filaments" min="100" max="280" step="10" value="180" oninput="updateSwarmPhysics()" />
+        </div>
+
+        <div class="genre-legend">
+          <span class="legend-chip"><span class="legend-dot" style="background:#ffb703;"></span> Book</span>
+          <span class="legend-chip"><span class="legend-dot" style="background:#00f5d4;"></span> Movie</span>
+          <span class="legend-chip"><span class="legend-dot" style="background:#ff2a54;"></span> TV</span>
+          <span class="legend-chip"><span class="legend-dot" style="background:#9d4edd;"></span> Podcast</span>
+          <span class="legend-chip"><span class="legend-dot" style="background:#70e000;"></span> Game</span>
+        </div>
+      </div>
+
+      <!-- FREE-FLOWING INTERACTIVE MEDIA SWARM STAGE -->
+      <div id="catalog-swarm-stage" class="swarm-stage">
+        <div class="swarm-hud">
+          <div class="swarm-hud-pill">✨ Interactive Media Swarm Active</div>
+          <div class="swarm-hud-pill">🔥 Dynamic Mass: Titles with higher review activity pull nearby items</div>
+        </div>
+        <canvas id="swarm-canvas"></canvas>
+        <div id="swarm-tooltip" class="swarm-tooltip"></div>
+      </div>
+
+      <!-- Bookshelf Container -->
+      <div id="catalog-shelf-container" class="bookshelf-unit hidden"></div>
+      
+      <!-- Fallback Grid Container -->
+      <div id="catalog-grid" class="media-grid hidden"></div>
+    </section>
+
+    <!-- VIEW 2: COMMUNITY LOUNGE -->
+    <section id="view-community" class="hidden">
+      <div class="community-layout">
+        <aside class="glass-panel" style="height: fit-content;">
+          <h3 style="margin-bottom: 14px;">Channels</h3>
+          <div style="display: flex; flex-direction: column; gap: 8px;">
+            <button class="btn" style="justify-content: flex-start;" onclick="loadCommunityPosts('')">🌐 All Discussions</button>
+            <button class="btn" style="justify-content: flex-start;" onclick="loadCommunityPosts('recommendation')">🌶️ Spicy Recommendations</button>
+            <button class="btn" style="justify-content: flex-start;" onclick="loadCommunityPosts('likes_dislikes')">👍 Likes, Tropes & Icks</button>
+            <button class="btn" style="justify-content: flex-start;" onclick="loadCommunityPosts('discussion')">💭 General Book/Media Chat</button>
+          </div>
+        </aside>
+        <div>
+          <div class="glass-panel" style="margin-bottom: 24px;">
+            <h3 style="margin-bottom: 12px;">Start a Thread</h3>
+            <form onsubmit="submitCommunityPost(event)">
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+                <select id="post-category" class="select-input"><option value="recommendation">🌶️ Recommendation</option><option value="likes_dislikes">👍 Likes / Dislikes</option><option value="discussion">💭 Discussion</option><option value="general">⚡ General Chat</option></select>
+                <select id="post-linked-title" class="select-input"><option value="">Link a Catalog Title (Optional)</option></select>
+              </div>
+              <div class="form-row"><input type="text" id="post-topic" placeholder="Headline" required /></div>
+              <div class="form-row"><textarea id="post-body" rows="3" placeholder="Share your thoughts. You can paste a GIF URL if allowed..." required></textarea></div>
+              <button type="submit" class="btn btn-fire">Post to Lounge 🚀</button>
+            </form>
+          </div>
+          <div id="community-feed"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- VIEW 3: MEMBERS DIRECTORY -->
+    <section id="view-members" class="hidden">
+      <div class="glass-panel" style="margin-bottom: 24px;">
+        <h2>Community Members & Public Shelves</h2>
+        <p style="color: var(--text-secondary); font-size: 0.92rem; margin-top: 4px;">Click any member to explore their personal media shelf or send a friend request.</p>
+      </div>
+      <div id="members-grid" class="media-grid"></div>
+    </section>
+
+    <!-- VIEW 4: USER LIBRARY / SHELF -->
+    <section id="view-library" class="hidden">
+      <div class="glass-panel" style="margin-bottom: 24px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px;">
+        <div>
+          <h2 id="shelf-owner-title">My Personal Shelf</h2>
+          <p id="shelf-owner-sub" style="color: var(--text-secondary); font-size: 0.9rem;">Track everything you've read, watched, or queued up.</p>
+        </div>
+        <div style="display: flex; gap: 10px; align-items: center;">
+          <div class="view-toggle-wrap">
+            <button class="view-toggle-btn active" id="btn-user-shelf-mode" onclick="setUserShelfViewMode('shelf')">📚 Shelf</button>
+            <button class="view-toggle-btn" id="btn-user-grid-mode" onclick="setUserShelfViewMode('grid')">▦ Grid</button>
+          </div>
+          <div id="shelf-relations-container" style="display: flex; gap: 8px;"></div>
+          <select id="shelf-filter" class="select-input" style="width: 180px;" onchange="renderShelfItems()"><option value="">All Shelf Statuses</option><option value="completed">✅ Completed</option><option value="in_progress">🔥 Currently Enjoying</option><option value="planned">📌 Want to Read/Watch</option><option value="dropped">🛑 Dropped</option></select>
+        </div>
+      </div>
+
+      <!-- Physical Bookshelves for User Library -->
+      <div id="user-shelf-container" class="bookshelf-unit"></div>
+      <!-- Fallback Grid for User Library -->
+      <div id="shelf-grid" class="media-grid hidden"></div>
+    </section>
+    
+    <!-- VIEW 5: INBOX & FRIENDS -->
+    <section id="view-inbox" class="hidden">
+      <div class="inbox-layout">
+        <aside class="glass-panel" style="height: fit-content;">
+          <h3 style="margin-bottom: 14px;">Connections</h3>
+          <div style="display: flex; flex-direction: column; gap: 8px;">
+            <button class="btn" style="justify-content: flex-start;" onclick="loadInbox()">✉️ Messages</button>
+            <button class="btn" style="justify-content: flex-start;" onclick="loadFriendsList()">👥 Friend List</button>
+            <button class="btn" style="justify-content: flex-start;" onclick="loadBlockList()">🛑 Blocked Users</button>
+          </div>
+        </aside>
+        <div id="inbox-main-content"></div>
+      </div>
+    </section>
+
+    <!-- VIEW 6: ADMIN DASHBOARD (INCLUDES BULK IMPORT TOOLS) -->
+    <section id="view-admin" class="hidden">
+      <div class="admin-layout">
+        <aside class="glass-panel" style="height: fit-content;">
+          <h3 style="margin-bottom: 14px;">Admin Tools</h3>
+          <div style="display: flex; flex-direction: column; gap: 8px;">
+            <button class="btn" id="btn-admin-queue" style="justify-content: flex-start;" onclick="showAdminSection('queue')">🛡️ Missing Info Queue</button>
+            <button class="btn active" id="btn-admin-import" style="justify-content: flex-start;" onclick="showAdminSection('import')">📦 Bulk Media Importer</button>
+          </div>
+        </aside>
+        <div>
+          <!-- Settings Toggles -->
+          <div class="glass-panel" style="margin-bottom: 24px;">
+            <h2>⚙️ Global Moderation Settings</h2>
+            <p style="font-size:0.9rem; color:var(--text-secondary); margin-bottom:14px;">Toggle community features instantly across the platform. Disabling features will strip them from new posts on the backend.</p>
+            <div style="display: flex; gap: 30px; align-items: center;">
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <label class="toggle-switch"><input type="checkbox" id="setting-emojis" onchange="toggleAdminSetting('allow_emojis', this.checked)"><span class="slider"></span></label>
+                <strong>Allow Emojis</strong>
+              </div>
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <label class="toggle-switch"><input type="checkbox" id="setting-gifs" onchange="toggleAdminSetting('allow_gifs', this.checked)"><span class="slider"></span></label>
+                <strong>Allow GIFs (Tenor/Giphy/Direct)</strong>
+              </div>
+            </div>
+          </div>
+
+          <!-- Section A: Bulk Importer (Google Sheets / CSV / Excel) -->
+          <div id="admin-sec-import" class="glass-panel" style="margin-bottom: 24px;">
+            <h2>📥 Bulk Media Importer & Dynamic Schema Review</h2>
+            <p style="font-size:0.9rem; color:var(--text-secondary); margin-top:4px; margin-bottom:18px;">
+              Upload any CSV or Excel workbook (.xlsx, .xls), or paste a published Google Sheet CSV link. 
+              The system automatically flags duplicates against existing entries in the database and halts to let you review & approve any new columns before modifying the schema.
+            </p>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+              <div style="background: rgba(8,8,16,0.6); padding: 16px; border-radius: 12px; border: 1px solid var(--border-glass);">
+                <label style="font-size: 0.85rem; font-weight: 700; color: var(--neon-cyan); display: block; margin-bottom: 8px;">Option 1: Upload Excel / CSV File</label>
+                <input type="file" id="bulk-file-input" accept=".csv, .xlsx, .xls" style="font-size: 0.85rem;" onchange="handleBulkFileSelect(event)" />
+              </div>
+              <div style="background: rgba(8,8,16,0.6); padding: 16px; border-radius: 12px; border: 1px solid var(--border-glass);">
+                <label style="font-size: 0.85rem; font-weight: 700; color: var(--neon-gold); display: block; margin-bottom: 8px;">Option 2: Published Google Sheet Link</label>
+                <div style="display: flex; gap: 8px;">
+                  <input type="url" id="bulk-gsheet-url" placeholder="https://docs.google.com/spreadsheets/d/.../pub?output=csv" style="font-size: 0.85rem; padding: 8px 12px; flex: 1; border-radius: 8px; background: #000; border: 1px solid var(--border-glass); color: #fff;" />
+                  <button class="btn btn-sm btn-fire" onclick="fetchGoogleSheetData()">Fetch</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Dynamic Schema Review Box (Shown when unknown columns are detected) -->
+            <div id="bulk-schema-review-box" class="hidden" style="background: rgba(255, 42, 84, 0.08); border: 1px solid var(--neon-crimson); border-radius: 12px; padding: 18px; margin-bottom: 20px;">
+              <h3 style="color: var(--neon-crimson); margin-bottom: 6px;">⚠️ New Database Columns Detected</h3>
+              <p style="font-size: 0.88rem; color: var(--text-secondary); margin-bottom: 12px;">The uploaded list contains fields that do not exist in the <code>titles</code> table yet. Review and choose which fields you want to add to the database structure:</p>
+              <div id="bulk-missing-cols-list" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px;"></div>
+              <button class="btn btn-fire btn-sm" onclick="approveAndApplySchemaChanges()">Approve Schema Changes & Proceed</button>
+            </div>
+
+            <!-- Analysis & Import Action Banner -->
+            <div id="bulk-analysis-results" class="hidden" style="background: rgba(8,8,16,0.85); border: 1px solid var(--border-glass); border-radius: 12px; padding: 16px; margin-bottom: 16px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                <div>
+                  <h4 style="margin-bottom: 4px;">Analysis Summary</h4>
+                  <div id="bulk-stats-text" style="font-size: 0.86rem; color: var(--text-secondary);"></div>
+                </div>
+                <button class="btn btn-fire" id="btn-execute-import" onclick="executeFinalBulkImport()">🚀 Start Ingestion</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Section B: Queue Grid -->
+          <div id="admin-sec-queue" class="hidden">
+            <h3 style="margin-bottom: 14px;">Media Needing Info</h3>
+            <div class="glass-panel" style="margin-bottom: 16px;">
+              <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:14px;">
+                <label style="display:flex; align-items:center; gap:8px;"><input type="checkbox" id="queue-select-all" onchange="selectAllQueueItems(this.checked)" /> Select all queue items</label>
+                <strong id="queue-selection-count" style="color:var(--neon-cyan);">0 selected</strong>
+                <span style="color:var(--text-secondary); font-size:.85rem;">Choose the fields to apply; unchecked fields stay unchanged. Checked empty fields are cleared.</span>
+              </div>
+              <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(210px,1fr)); gap:10px;">
+                <label><input type="checkbox" id="bulk-apply-kind" /> Category / media type
+                  <select id="bulk-kind" class="select-input"><option value="book">Book</option><option value="movie">Movie</option><option value="tv">TV</option><option value="podcast">Podcast</option><option value="game">Game</option><option value="other">Other</option></select>
+                </label>
+                <label><input type="checkbox" id="bulk-apply-creator" /> Creator
+                  <input type="text" id="bulk-creator" placeholder="Set or clear creator" />
+                </label>
+                <label><input type="checkbox" id="bulk-apply-year" /> Release year
+                  <input type="number" id="bulk-year" min="1" max="9999" placeholder="Set or clear year" />
+                </label>
+                <label><input type="checkbox" id="bulk-apply-rating" /> Catalog rating (0–5)
+                  <input type="number" id="bulk-rating" min="0" max="5" step="0.1" placeholder="Separate from user reviews" />
+                </label>
+                <label><input type="checkbox" id="bulk-apply-genres" /> Genres
+                  <input type="text" id="bulk-genres" placeholder="Comma-separated" />
+                </label>
+                <label><input type="checkbox" id="bulk-apply-tropes" /> Tropes
+                  <input type="text" id="bulk-tropes" placeholder="Comma-separated" />
+                </label>
+                <label><input type="checkbox" id="bulk-apply-tags" /> Tags
+                  <input type="text" id="bulk-tags" placeholder="Comma-separated" />
+                </label>
+                <label><input type="checkbox" id="bulk-apply-cover" /> Cover URL
+                  <input type="url" id="bulk-cover" placeholder="https://..." />
+                </label>
+              </div>
+              <label style="display:block; margin-top:10px;"><input type="checkbox" id="bulk-apply-description" /> Synopsis
+                <textarea id="bulk-description" rows="2" placeholder="Set or clear synopsis"></textarea>
+              </label>
+              <button type="button" class="btn btn-fire" style="margin-top:12px;" onclick="applyBulkQueueEdit()">Apply to selected titles</button>
+              <button type="button" class="btn" id="btn-enrich-queue" style="margin-top:12px;" onclick="enrichMissingInfoQueue()">🔎 Search metadata & covers for entire queue</button>
+              <div id="queue-enrichment-status" role="status" style="margin-top:10px; color:var(--text-secondary);"></div>
+              <pre id="queue-enrichment-log" aria-live="polite" style="max-height:180px; overflow:auto; white-space:pre-wrap; font-size:.8rem; color:var(--text-secondary);"></pre>
+            </div>
+            <div id="admin-grid" class="media-grid"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- FLOATING 3D INSPECTION SHOWCASE -->
+  <div id="inspect-stage" class="inspect-overlay-stage" onclick="handleStageBackdropClick(event)">
+    <div style="text-align: center; margin-bottom: 22px;">
+      <h2 id="inspect-title" style="font-size: 1.7rem; color: #fff; text-shadow: 0 4px 14px rgba(0,0,0,0.85);">Title</h2>
+      <p id="inspect-creator" style="color: var(--neon-cyan); font-weight: 600; font-size: 1rem; margin-top: 4px;"></p>
+    </div>
+
+    <div class="inspect-rig-container" id="inspect-rig" onclick="toggleBookFlip()">
+      <div class="held-book-card" id="held-card">
+        <div class="held-card-face held-card-front">
+          <img id="held-card-cover-img" src="" alt="Cover" />
+        </div>
+        <div class="held-card-face held-card-back">
+          <div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+              <span id="held-back-kind" class="role-tag role-moderator">BOOK</span>
+              <span id="held-back-spice" style="color: var(--neon-crimson); font-weight: 800;">3.0 🌶️</span>
+            </div>
+            <h4 style="color: #fff; margin-bottom: 10px;">Back Cover & Synopsis</h4>
+            <div id="held-back-desc" style="font-size: 0.86rem; line-height: 1.5; color: var(--text-secondary); max-height: 250px; overflow-y: auto;"></div>
+          </div>
+          <div style="margin-top: 14px; padding-top: 10px; border-top: 1px solid var(--border-glass); display: flex; justify-content: space-between; font-size: 0.78rem; color: var(--text-secondary);">
+            <span id="held-back-isbn"></span>
+            <span id="held-back-year"></span>
+          </div>
+        </div>
+      </div>
+      <div class="inspect-pedestal-light"></div>
+    </div>
+
+    <div class="inspect-action-bar">
+      <button class="btn btn-fire" onclick="toggleBookFlip()">🔄 Flip Front / Back</button>
+      <button class="btn" id="inspect-full-details-btn" onclick="openHeldFullDetails()">📖 Reviews & Heat Details</button>
+      <button class="btn" onclick="putMediaBackOnShelf()">⬇️ Return to Swarm</button>
+    </div>
+  </div>
+
+  <!-- MODALS -->
+  <div id="modal-detail" class="modal-backdrop hidden">
+    <div class="modal-box" style="max-width: 780px;">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 18px;">
+        <h2 id="detail-title">Title</h2><button class="btn btn-sm" onclick="closeDetailModal()">✕ Close</button>
+      </div>
+      <div id="detail-content"></div>
+    </div>
+  </div>
+
+  <div id="modal-discovery" class="modal-backdrop hidden">
+    <div class="modal-box" style="max-width: 900px; max-height: 88vh; overflow-y: auto;">
+      <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:14px;">
+        <h2 id="discovery-heading">Explore related media</h2>
+        <button type="button" class="btn btn-sm" onclick="closeDiscoveryModal()">✕ Close</button>
+      </div>
+      <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom:14px;">
+        <label for="discovery-kind">Media type</label>
+        <select id="discovery-kind" class="select-input" onchange="searchRelatedMedia()">
+          <option value="all">All media</option><option value="book">Books</option><option value="movie">Movies</option>
+          <option value="tv">TV</option><option value="podcast">Podcasts</option><option value="game">Games</option><option value="other">Other</option>
+        </select>
+      </div>
+      <div id="discovery-status" role="status" style="color:var(--text-secondary); margin-bottom:10px;"></div>
+      <div id="discovery-catalog-results"></div>
+      <div id="discovery-public-results"></div>
+    </div>
+  </div>
+
+  <div id="modal-add" class="modal-backdrop hidden">
+    <div class="modal-box">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px;">
+        <h3>Add Media to Catalog</h3><button class="btn btn-sm" onclick="closeAddTitleModal()">✕</button>
+      </div>
+      <form onsubmit="submitNewTitle(event)">
+        <div class="form-row"><label>Media Type</label><select id="add-kind" onchange="updateAddModalFields()"><option value="book">📚 Book</option><option value="movie">🎬 Movie</option><option value="tv">📺 TV Series</option><option value="podcast">🎙️ Podcast</option><option value="game">🎮 Game</option><option value="other">✨ Other</option></select></div>
+        <div class="form-row" id="add-isbn-row"><label>ISBN</label><div style="display: flex; gap: 8px;"><input type="text" id="add-isbn" /><button type="button" class="btn btn-fire" onclick="fetchMetadata()">Auto-Fetch</button></div></div>
+        <div class="form-row"><label>Title</label><div style="display: flex; gap: 8px;"><input type="text" id="add-title" required /><button type="button" class="btn" onclick="fetchMetadata()">🔍 Auto-Fill</button></div></div>
+        <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 12px;"><div class="form-row"><label>Creator</label><input type="text" id="add-creator" /></div><div class="form-row"><label>Year</label><input type="number" id="add-year" /></div></div>
+        <div class="form-row"><label>Cover Art URL</label><input type="url" id="add-cover" oninput="previewCoverArt(this.value)" /><div style="display: flex; align-items: center; gap: 14px; margin-top: 10px;"><img id="add-cover-preview" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='85' fill='%23151525'%3E%3Crect width='60' height='85'/%3E%3C/svg%3E" style="width: 60px; height: 85px; object-fit: cover; border-radius: 6px; border: 1px solid var(--border-glass);" /><span id="add-cover-status" style="font-size: 0.82rem; color: var(--text-secondary);">Auto-Fetch pulls high-res art.</span></div></div>
+        <div class="form-row"><label>Synopsis</label><textarea id="add-desc" rows="3"></textarea></div>
+        <button type="submit" class="btn btn-fire" style="width: 100%;">Save to Catalog & Shelf</button>
+      </form>
+    </div>
+  </div>
+  
+  <div id="modal-edit" class="modal-backdrop hidden">
+    <div class="modal-box">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px;">
+        <h3>Edit Media Metadata</h3><button type="button" class="btn btn-sm" onclick="closeEditTitleModal()">✕</button>
+      </div>
+      <form onsubmit="submitEditTitle(event)">
+        <input type="hidden" id="edit-id" />
+        <div class="form-row"><label>Media Type</label><select id="edit-kind" onchange="updateEditModalFields()"><option value="book">📚 Book</option><option value="movie">🎬 Movie</option><option value="tv">📺 TV</option><option value="podcast">🎙️ Podcast</option><option value="game">🎮 Game</option><option value="other">✨ Other</option></select></div>
+        <div class="form-row" id="edit-isbn-row"><label>ISBN</label><div style="display: flex; gap: 8px;"><input type="text" id="edit-isbn" /><button type="button" class="btn btn-fire" onclick="fetchEditMetadata()">Auto-Fetch</button></div></div>
+        <div class="form-row"><label>Title</label><div style="display: flex; gap: 8px;"><input type="text" id="edit-title" required /><button type="button" class="btn" onclick="fetchEditMetadata()">🔍 Auto-Fill</button></div></div>
+        <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 12px;"><div class="form-row"><label>Creator</label><input type="text" id="edit-creator" /></div><div class="form-row"><label>Year</label><input type="number" id="edit-year" /></div></div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;"><div class="form-row"><label>Catalog Rating (0–5)</label><input type="number" id="edit-catalog-rating" min="0" max="5" step="0.1" /></div><div class="form-row"><label>Genres (comma-separated)</label><input type="text" id="edit-genres" /></div></div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;"><div class="form-row"><label>Tropes (comma-separated)</label><input type="text" id="edit-tropes" /></div><div class="form-row"><label>Tags (comma-separated)</label><input type="text" id="edit-tags" /></div></div>
+        <div class="form-row"><label>Cover URL</label><input type="url" id="edit-cover" oninput="previewCoverArt(this.value, 'edit-cover-preview')" /><div style="display: flex; align-items: center; gap: 14px; margin-top: 10px;"><img id="edit-cover-preview" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='85' fill='%23151525'%3E%3Crect width='60' height='85'/%3E%3C/svg%3E" style="width: 60px; height: 85px; object-fit: cover; border-radius: 6px; border: 1px solid var(--border-glass);" /><span id="edit-cover-status" style="font-size: 0.82rem; color: var(--text-secondary);"></span></div></div>
+        <div class="form-row"><label>Synopsis</label><textarea id="edit-desc" rows="3"></textarea></div>
+        <button type="submit" class="btn btn-fire" style="width: 100%;">Save Changes</button>
+      </form>
+    </div>
+  </div>
+
+  <div id="modal-profile" class="modal-backdrop hidden">
+    <div class="modal-box" style="max-width: 500px;">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 18px;">
+        <h3 id="prof-heading">Edit Profile</h3><button type="button" class="btn btn-sm" onclick="closeProfileModal()">✕ Close</button>
+      </div>
+      <div style="text-align: center; margin-bottom: 24px;">
+        <div id="prof-avatar-preview" style="margin: 0 auto 12px; width: 80px; height: 80px; font-size: 2.2rem; display: flex; align-items: center; justify-content: center;"></div>
+        <p id="prof-email" style="color: var(--text-secondary); font-size: 0.88rem; margin-bottom: 6px;"></p>
+        <span id="prof-role" class="role-tag role-member">MEMBER</span>
+      </div>
+      <form onsubmit="saveProfile(event)">
+        <div class="form-row"><label>Display Name</label><input type="text" id="prof-input-name" required /></div>
+        <div class="form-row"><label>Username (@handle)</label><input type="text" id="prof-input-username" placeholder="Optional" /></div>
+        <div class="form-row"><label>Avatar URL (Image Link)</label><input type="url" id="prof-input-avatar" placeholder="https://..." oninput="previewProfileAvatar()" /></div>
+        <div style="display: flex; gap: 10px; margin-top: 24px;">
+          <button type="submit" class="btn btn-fire" style="flex: 1;">Save Profile</button>
+          <button type="button" class="btn" onclick="closeProfileModal(); openUserShelf(currentUser.id);">📚 My Shelf</button>
+        </div>
+      </form>
+      <div style="margin-top: 18px; padding-top: 18px; border-top: 1px solid var(--border-glass); text-align: center;">
+        <button type="button" class="btn btn-sm" style="color: var(--neon-crimson); border-color: var(--border-neon);" onclick="signOut()">Sign Out</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="modal-auth" class="modal-backdrop hidden">
+    <div class="modal-box" style="max-width: 420px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px;">
+        <h3 id="auth-heading">Sign In</h3><button type="button" class="btn btn-sm" onclick="closeAuthModal()">✕</button>
+      </div>
+      <form id="form-auth-main" onsubmit="submitAuth(event)">
+        <div class="form-row hidden" id="auth-name-wrap"><label>Display Name</label><input type="text" id="auth-name" /></div>
+        <div class="form-row hidden" id="auth-username-wrap"><label>Username (@handle)</label><input type="text" id="auth-username" /></div>
+        <div class="form-row"><label>Email Address</label><input type="email" id="auth-email" required /></div>
+        <div class="form-row"><label>Password</label><input type="password" id="auth-password" required minlength="8" /></div>
+        <button type="submit" class="btn btn-fire" style="width: 100%;" id="auth-btn">Sign In</button>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 14px; font-size: 0.85rem;">
+          <p style="color: var(--text-secondary); cursor: pointer;" onclick="toggleAuthMode()" id="auth-switch">New here? Create account</p>
+          <p style="color: var(--text-secondary); cursor: pointer;" onclick="toggleForgotMode()" id="auth-forgot-trigger">Forgot Password?</p>
+        </div>
+      </form>
+      <form id="form-auth-forgot" class="hidden" onsubmit="submitForgotPassword(event)">
+        <div class="form-row"><label>Email Address</label><input type="email" id="forgot-email" required /></div>
+        <button type="submit" class="btn btn-fire" style="width: 100%;">Send Reset Link</button>
+        <p style="text-align: center; margin-top: 14px; font-size: 0.85rem; color: var(--text-secondary); cursor: pointer;" onclick="toggleForgotMode()">Back</p>
+      </form>
+      <form id="form-auth-reset" class="hidden" onsubmit="submitResetPassword(event)">
+        <div class="form-row"><label>Reset Token</label><input type="text" id="reset-token" required /></div>
+        <div class="form-row"><label>New Password</label><input type="password" id="reset-password" required minlength="8" /></div>
+        <button type="submit" class="btn btn-fire" style="width: 100%;">Update Password</button>
+        <p style="text-align: center; margin-top: 14px; font-size: 0.85rem; color: var(--text-secondary); cursor: pointer;" onclick="toggleForgotMode()">Cancel</p>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    const API = '/api/index.php';
+    let authToken = localStorage.getItem('spicy_jwt') || localStorage.getItem('sublyime_token');
+    let currentUser = null;
+    let appSettings = { allow_emojis: '1', allow_gifs: '1' };
+    let catalogCache = [];
+    let currentShelfItems = [];
+    let currentShelfOwner = null;
+    let currentChatPartnerId = null;
+    let chatPollTimer = null;
+    let isRegistering = false;
+    let searchTimer = null;
+    let selectedSpice = 3;
+    let activeDiscovery = { type: '', query: '' };
+    let discoveryResults = [];
+    let discoveryCatalogResults = [];
+
+    // View Modes
+    let catalogViewMode = 'swarm'; // 'swarm' | 'shelf' | 'grid'
+    let userShelfViewMode = 'shelf'; // 'shelf' | 'grid'
+    let activeInspectedItem = null;
+
+    // Swarm Simulation & Physics Configuration
+    let swarmNodes = [];
+    let swarmAnimId = null;
+    let swarmCanvas = null;
+    let swarmCtx = null;
+    let hoveredNode = null;
+    let draggedNode = null;
+    const coverImageCache = {};
+
+    let swarmPhysics = {
+      gravity: 0.0002,
+      repulsion: 75,
+      filamentReach: 180,
+    };
+
+    // Bulk Importer Staging Memory
+    let stagedParsedRows = [];
+    let stagedMissingCols = [];
+    let selectedQueueIds = new Set();
+
+    const GENRE_COLORS = {
+      book:    { hex: '#ffb703', rgb: '255, 183, 3' },
+      movie:   { hex: '#00f5d4', rgb: '0, 245, 212' },
+      tv:      { hex: '#ff2a54', rgb: '255, 42, 84' },
+      podcast: { hex: '#9d4edd', rgb: '157, 78, 221' },
+      game:    { hex: '#70e000', rgb: '112, 224, 0' },
+      other:   { hex: '#ff6b2b', rgb: '255, 107, 43' }
+    };
+
+    const FALLBACK_COVER = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='420' fill='%23121222'%3E%3Crect width='300' height='420'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='%23ff2a54' font-family='sans-serif' font-size='28'%3E🌶️%3C/text%3E%3C/svg%3E";
+
+    window.addEventListener('DOMContentLoaded', async () => {
+      await fetchSettings();
+      if (authToken) await fetchCurrentUser();
+      renderHeaderUser();
+      initSwarmCanvas();
+      await loadCatalog();
+
+      window.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') putMediaBackOnShelf();
+      });
+      window.addEventListener('resize', resizeSwarmCanvas);
+    });
+
+    // --- Core Formatting & Settings Helpers ---
+    async function fetchSettings() {
+      try {
+        const res = await fetch(`${API}?route=/settings`);
+        if (res.ok) {
+           const data = await res.json();
+           appSettings = data.settings || { allow_emojis: '1', allow_gifs: '1' };
+           const emojiBox = document.getElementById('setting-emojis');
+           const gifBox = document.getElementById('setting-gifs');
+           if (emojiBox) emojiBox.checked = appSettings.allow_emojis === '1';
+           if (gifBox) gifBox.checked = appSettings.allow_gifs === '1';
+        }
+      } catch (e) { console.error(e); }
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+    }
+
+    function renderDiscoveryLink(type, query, kind = 'all', label = query) {
+      return `<button type="button" class="btn btn-sm" style="margin:2px;" data-discovery-type="${type}" data-discovery-query="${escapeHtml(query)}" data-discovery-kind="${kind}" onclick="event.stopPropagation(); discoverFromButton(this)">${escapeHtml(label)}</button>`;
+    }
+
+    function renderGenreDiscoveryLinks(genres) {
+      return String(genres || '').split(',').map(genre => genre.trim()).filter(Boolean)
+        .map(genre => renderDiscoveryLink('genre', genre, 'all', genre)).join('');
+    }
+
+    function discoverFromButton(button) {
+      discoverRelatedMedia(button.dataset.discoveryType, button.dataset.discoveryQuery, button.dataset.discoveryKind);
+    }
+
+    async function discoverRelatedMedia(type, query, kind = 'all') {
+      const cleanQuery = (query || '').trim();
+      if (!cleanQuery || !['creator', 'genre'].includes(type)) return;
+      activeDiscovery = { type, query: cleanQuery };
+      document.getElementById('discovery-kind').value = kind;
+      document.getElementById('modal-discovery').classList.remove('hidden');
+      await searchRelatedMedia();
+    }
+
+    function closeDiscoveryModal() {
+      document.getElementById('modal-discovery').classList.add('hidden');
+    }
+
+    async function searchRelatedMedia() {
+      const { type, query } = activeDiscovery;
+      if (!type || !query) return;
+      const kind = document.getElementById('discovery-kind').value;
+      const status = document.getElementById('discovery-status');
+      const catalogContainer = document.getElementById('discovery-catalog-results');
+      const publicContainer = document.getElementById('discovery-public-results');
+      status.textContent = 'Searching the catalog and public sources…';
+      catalogContainer.innerHTML = '';
+      publicContainer.innerHTML = '';
+
+      try {
+        const url = `${API}?route=/discovery/search&type=${encodeURIComponent(type)}&kind=${encodeURIComponent(kind)}&q=${encodeURIComponent(query)}`;
+        const res = await fetch(url);
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Related media search failed.');
+
+        discoveryResults = data.publicResults || [];
+        discoveryCatalogResults = data.catalog || [];
+        document.getElementById('discovery-heading').textContent =
+          `${type === 'creator' ? 'More by' : 'Genre'}: ${query}`;
+        const catalog = discoveryCatalogResults;
+        catalogContainer.innerHTML = `<h3 style="margin:12px 0;">Already in the catalog (${catalog.length})</h3>${
+          catalog.length ? catalog.map((item, index) => `
+            <div class="friend-row" style="gap:12px;">
+              <img src="${escapeHtml(item.coverUrl || FALLBACK_COVER)}" alt="" style="width:54px;height:72px;object-fit:cover;border-radius:6px;" onerror="this.src='${FALLBACK_COVER}'" />
+              <div style="flex:1;"><strong>${escapeHtml(item.title)}</strong><div style="font-size:.82rem;color:var(--text-secondary);">${escapeHtml(item.kind)}${item.creator ? ` · ${escapeHtml(item.creator)}` : ''}${item.releaseYear ? ` · ${item.releaseYear}` : ''}</div></div>
+              <button type="button" class="btn btn-sm" onclick="openDiscoveredCatalogTitle(${index})">View</button>
+            </div>`).join('') : '<p style="color:var(--text-secondary);">No matching media in the catalog yet.</p>'
+        }`;
+
+        const additions = discoveryResults.filter(item => !item.inCatalog);
+        const alreadyAdded = discoveryResults.length - additions.length;
+        publicContainer.innerHTML = `<h3 style="margin:18px 0 10px;">Public sources (${additions.length}${alreadyAdded ? ` · ${alreadyAdded} already in catalog` : ''})</h3>${
+          additions.length ? additions.map(item => `
+            <div class="friend-row" style="gap:12px;">
+              <img src="${escapeHtml(item.coverUrl || FALLBACK_COVER)}" alt="" style="width:54px;height:72px;object-fit:cover;border-radius:6px;" onerror="this.src='${FALLBACK_COVER}'" />
+              <div style="flex:1;"><strong>${escapeHtml(item.title)}</strong><div style="font-size:.82rem;color:var(--text-secondary);">${escapeHtml(item.kind)}${item.creator ? ` · ${escapeHtml(item.creator)}` : ''}${item.releaseYear ? ` · ${item.releaseYear}` : ''} · ${escapeHtml(item.source || 'Public source')}</div>
+                ${item.description ? `<div style="font-size:.8rem;margin-top:4px;">${escapeHtml(item.description.slice(0, 220))}</div>` : ''}
+              </div>
+              ${item.sourceUrl ? `<a class="btn btn-sm" href="${escapeHtml(item.sourceUrl)}" target="_blank" rel="noopener noreferrer">Source</a>` : ''}
+              <button type="button" class="btn btn-fire btn-sm" onclick="addDiscoveredItem(${discoveryResults.indexOf(item)}, this)">Add to catalog</button>
+            </div>`).join('') : '<p style="color:var(--text-secondary);">No new public-source matches found for this filter.</p>'
+        }`;
+        status.textContent = 'Catalog matches and public-source suggestions are shown separately.';
+      } catch (error) {
+        status.textContent = error.message || 'Related media search failed.';
+      }
+    }
+
+    function openDiscoveredCatalogTitle(index) {
+      const item = discoveryCatalogResults[index];
+      if (!item) return;
+      if (!catalogCache.some(catalogItem => catalogItem.id === item.id)) catalogCache.push(item);
+      closeDiscoveryModal();
+      openTitleDetail(item.id);
+    }
+
+    async function addDiscoveredItem(index, button) {
+      const item = discoveryResults[index];
+      if (!item) return;
+      if (!authToken) { openAuthModal(); return; }
+      if (button) button.disabled = true;
+      try {
+        const res = await fetch(`${API}?route=/titles`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authToken },
+          body: JSON.stringify({
+            kind: item.kind, title: item.title, creator: item.creator, isbn: item.isbn,
+            barcode: item.barcode, releaseYear: item.releaseYear, coverUrl: item.coverUrl,
+            description: item.description
+          })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Could not add this title to the catalog.');
+        await loadCatalog();
+        await searchRelatedMedia();
+      } catch (error) {
+        alert(error.message || 'Could not add this title to the catalog.');
+      } finally {
+        if (button) button.disabled = false;
+      }
+    }
+    
+    function formatContent(str) {
+      let safe = escapeHtml(str);
+      if (appSettings.allow_gifs === '1') {
+         const gifRegex = /(https?:\/\/[^\s]+(?:\.gif|giphy\.com|tenor\.com)[^\s]*)/gi;
+         safe = safe.replace(gifRegex, '<br><img src="$1" class="chat-gif" /><br>');
+      }
+      return safe;
+    }
+
+    function renderAvatar(userObj, size = 32, fontSize = 0.9) {
+      const name = userObj.name || userObj.authorName || userObj.reviewer || userObj.partnerName || 'U';
+      const initial = name.charAt(0).toUpperCase();
+      const url = userObj.avatarUrl || userObj.authorAvatar || userObj.reviewerAvatar || userObj.partnerAvatar || userObj.avatar_url;
+      if (url) return `<img src="${escapeHtml(url)}" class="user-avatar" style="width: ${size}px; height: ${size}px;" onerror="this.outerHTML='<div class=\\'user-avatar\\' style=\\'width:${size}px; height:${size}px; font-size:${fontSize}rem;\\'>${escapeHtml(initial)}</div>'" />`;
+      return `<div class="user-avatar" style="width: ${size}px; height: ${size}px; font-size: ${fontSize}rem;">${escapeHtml(initial)}</div>`;
+    }
+
+    // --- Profile Modal Functions ---
+    function openProfileModal() {
+      if (!currentUser) { openAuthModal(); return; }
+      document.getElementById('prof-input-name').value = currentUser.name || '';
+      document.getElementById('prof-input-username').value = currentUser.username || '';
+      document.getElementById('prof-input-avatar').value = currentUser.avatarUrl || currentUser.avatar_url || '';
+      document.getElementById('prof-email').innerText = currentUser.email || '';
+      const roleEl = document.getElementById('prof-role');
+      roleEl.innerText = (currentUser.role || 'member').toUpperCase();
+      roleEl.className = `role-tag role-${currentUser.role || 'member'}`;
+      previewProfileAvatar();
+      document.getElementById('modal-profile').classList.remove('hidden');
+    }
+
+    function closeProfileModal() {
+      document.getElementById('modal-profile').classList.add('hidden');
+    }
+
+    // --- Authentication ---
+    async function fetchCurrentUser() {
+      try {
+        const res = await fetch(`${API}?route=/auth/me`, { headers: { 'Authorization': `Bearer ${authToken}` } });
+        if (res.ok) currentUser = (await res.json()).user; else signOut();
+      } catch (e) { console.error(e); }
+    }
+
+    function renderHeaderUser() {
+      const slot = document.getElementById('nav-user-slot');
+      const adminTab = document.getElementById('tab-admin');
+      const inboxTab = document.getElementById('tab-inbox');
+      if (adminTab) adminTab.classList.toggle('hidden', !(currentUser && currentUser.role === 'admin'));
+      if (inboxTab) inboxTab.classList.toggle('hidden', !currentUser);
+      
+      if (!slot) return;
+      if (currentUser) {
+        const handle = currentUser.username ? `@${currentUser.username}` : currentUser.role.toUpperCase();
+        slot.innerHTML = `
+          <div class="user-pill" onclick="openProfileModal()" title="Edit Profile">
+            ${renderAvatar(currentUser, 32, 0.9)}
+            <div>
+              <div style="font-size: 0.86rem; font-weight: 700; line-height: 1.1;">${escapeHtml(currentUser.name)}</div>
+              <div style="font-size: 0.68rem; color: var(--neon-crimson); text-transform: uppercase;">${escapeHtml(handle)}</div>
+            </div>
+          </div>
+        `;
+      } else {
+        slot.innerHTML = `<div style="display:flex; gap:8px;"><button class="btn" onclick="openAuthModal()">Sign In</button><button class="btn btn-fire" onclick="openRegisterModal()">Sign Up</button></div>`;
+      }
+    }
+
+    async function submitAuth(e) {
+      e.preventDefault();
+      const route = isRegistering ? '/auth/register' : '/auth/login';
+      const payload = { email: document.getElementById('auth-email').value.trim(), password: document.getElementById('auth-password').value };
+      if (isRegistering) {
+        payload.name = document.getElementById('auth-name').value.trim();
+        payload.username = document.getElementById('auth-username').value.trim();
+      }
+      const res = await fetch(`${API}?route=${encodeURIComponent(route)}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+      const data = await res.json();
+      if (!res.ok) { alert(data.error || 'Authentication failed'); return; }
+      authToken = data.token; currentUser = data.user;
+      localStorage.setItem('spicy_jwt', authToken); localStorage.setItem('sublyime_token', authToken);
+      closeAuthModal(); renderHeaderUser(); loadCatalog();
+    }
+    
+    async function saveProfile(e) {
+        e.preventDefault(); if (!authToken) return;
+        const payload = { name: document.getElementById('prof-input-name').value.trim(), username: document.getElementById('prof-input-username').value.trim(), avatarUrl: document.getElementById('prof-input-avatar').value.trim() };
+        const res = await fetch(`${API}?route=/users/me`, { method: 'PUT', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` }, body: JSON.stringify(payload) });
+        const data = await res.json();
+        if (res.ok) {
+            currentUser = data.user; renderHeaderUser(); closeProfileModal();
+            alert('Profile updated successfully!');
+            const activeTab = document.querySelector('.nav-tab.active');
+            if (activeTab) switchView(activeTab.id.replace('tab-', ''));
+        } else alert(data.error || 'Failed to update profile.');
+    }
+    
+    function previewProfileAvatar() {
+        const url = document.getElementById('prof-input-avatar').value.trim();
+        document.getElementById('prof-avatar-preview').innerHTML = renderAvatar({ name: document.getElementById('prof-input-name').value.trim() || 'U', avatarUrl: url }, 80, 2.2);
+    }
+
+    function signOut() {
+      authToken = null; currentUser = null;
+      selectedQueueIds.clear();
+      localStorage.removeItem('spicy_jwt'); localStorage.removeItem('sublyime_token');
+      closeProfileModal(); renderHeaderUser(); switchView('catalog');
+    }
+
+    // --- Navigation ---
+    function switchView(view) {
+      if (chatPollTimer) clearInterval(chatPollTimer);
+      ['catalog', 'community', 'members', 'library', 'admin', 'inbox'].forEach(v => {
+        const sec = document.getElementById(`view-${v}`); const tab = document.getElementById(`tab-${v}`);
+        if (sec) sec.classList.toggle('hidden', v !== view);
+        if (tab) tab.classList.toggle('active', v === view);
+      });
+      if (view === 'catalog') {
+        loadCatalog();
+        if (catalogViewMode === 'swarm') startSwarmAnimation();
+      } else {
+        stopSwarmAnimation();
+      }
+      if (view === 'community') { populatePostTitleSelect(); loadCommunityPosts(''); }
+      if (view === 'members') loadMembersDirectory();
+      if (view === 'library') { if (!currentUser) { openAuthModal(); return; } openUserShelf(currentUser.id); }
+      if (view === 'admin') showAdminSection('import');
+      if (view === 'inbox') loadInbox();
+    }
+
+    // --- Admin Dashboard & Bulk Importer Workflows ---
+    function showAdminSection(sec) {
+      const isImport = (sec === 'import');
+      document.getElementById('admin-sec-import').classList.toggle('hidden', !isImport);
+      document.getElementById('admin-sec-queue').classList.toggle('hidden', isImport);
+      document.getElementById('btn-admin-import').classList.toggle('active', isImport);
+      document.getElementById('btn-admin-queue').classList.toggle('active', !isImport);
+      if (!isImport) loadAdminQueue();
+    }
+
+    async function toggleAdminSetting(key, checked) {
+        if (!currentUser || currentUser.role !== 'admin') return;
+        const val = checked ? '1' : '0';
+        appSettings[key] = val;
+        const res = await fetch(`${API}?route=/admin/settings`, {
+           method: 'PATCH',
+           headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
+           body: JSON.stringify({ key, value: val })
+        });
+        if (!res.ok) alert((await res.json()).error || 'Failed to update global setting.');
+    }
+
+    async function loadAdminQueue() {
+      if (!currentUser || currentUser.role !== 'admin') return;
+      const res = await fetch(`${API}?route=/titles&needsInfo=1`, {
+        headers: { 'Authorization': 'Bearer ' + authToken }
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        alert(data.error || 'Failed to load the missing info queue.');
+        return;
+      }
+      catalogCache = data.titles || [];
+      const queueIds = new Set(catalogCache.map(item => item.id));
+      selectedQueueIds = new Set([...selectedQueueIds].filter(id => queueIds.has(id)));
+      const grid = document.getElementById('admin-grid');
+      if (catalogCache.length === 0) {
+        grid.innerHTML = `<div class="glass-panel" style="grid-column: 1/-1; text-align: center; color: var(--text-secondary);">All catalog items currently have complete info! 🎉</div>`;
+        updateQueueSelectionUI();
+        return;
+      }
+      renderAdminQueueItems();
+    }
+
+    function renderAdminQueueItems() {
+      const grid = document.getElementById('admin-grid');
+      if (catalogCache.length === 0) {
+        grid.innerHTML = `<div class="glass-panel" style="grid-column: 1/-1; text-align: center; color: var(--text-secondary);">All catalog items currently have complete info! 🎉</div>`;
+        updateQueueSelectionUI();
+        return;
+      }
+      grid.innerHTML = catalogCache.map(item => `
+        <div class="media-card" onclick="openTitleDetail(${item.id})">
+          <div class="card-cover-wrap"><img class="card-cover" src="${escapeHtml(item.coverUrl || FALLBACK_COVER)}" onerror="this.src='${FALLBACK_COVER}'" />
+            <span class="kind-pill">${escapeHtml(item.kind)}</span><div class="spice-badge-overlay" style="background: rgba(255,107,43,0.9); border-color: var(--neon-orange);">Missing Info</div>
+          </div>
+          <div class="card-body">
+            <label onclick="event.stopPropagation()" style="display:flex; align-items:center; gap:6px; margin-bottom:8px;"><input type="checkbox" class="queue-item-select" value="${item.id}" ${selectedQueueIds.has(item.id) ? 'checked' : ''} onchange="toggleQueueItem(${item.id}, this.checked)" /> Select</label>
+            <div class="card-title">${escapeHtml(item.title)}</div><div class="card-creator">${escapeHtml(item.creator || 'Unknown')}</div>
+            ${item.catalogRating !== null ? `<div style="font-size:.8rem;color:var(--neon-gold);">Catalog rating: ${Number(item.catalogRating).toFixed(1)}/5</div>` : ''}
+            ${[item.genres, item.tropes, item.tags].filter(Boolean).length ? `<div style="font-size:.75rem;color:var(--text-secondary);">${escapeHtml([item.genres, item.tropes, item.tags].filter(Boolean).join(' · '))}</div>` : ''}
+            <div class="card-footer" style="padding-top: 14px;"><button class="btn btn-sm" style="color: var(--neon-cyan); width: 100%;" onclick="event.stopPropagation(); openEditTitleModal(${item.id})">✏️ Edit Metadata</button></div>
+          </div>
+        </div>`).join('');
+      updateQueueSelectionUI();
+    }
+
+    async function enrichMissingInfoQueue() {
+      if (!currentUser || currentUser.role !== 'admin') return;
+      const queue = [...catalogCache];
+      if (queue.length === 0) { alert('The missing info queue is empty.'); return; }
+      if (!window.confirm(`Search external metadata and covers for all ${queue.length} queued items? Items with errors or incomplete data will stay in the queue.`)) return;
+
+      const button = document.getElementById('btn-enrich-queue');
+      const status = document.getElementById('queue-enrichment-status');
+      const log = document.getElementById('queue-enrichment-log');
+      const failures = [];
+      let completed = 0;
+      button.disabled = true;
+      log.textContent = '';
+
+      const recordIssue = (item, message) => {
+        const entry = `${item.title} (ID ${item.id}): ${message}`;
+        failures.push(entry);
+        log.textContent += `${entry}\n`;
+        console.warn('[Missing info queue]', entry);
+      };
+
+      try {
+        for (let index = 0; index < queue.length; index++) {
+          const item = queue[index];
+          status.textContent = `Searching ${index + 1} of ${queue.length}: ${item.title}`;
+          try {
+            const lookupUrl = `${API}?route=/metadata/lookup&external=1&kind=${encodeURIComponent(item.kind)}&isbn=${encodeURIComponent(item.isbn || '')}&q=${encodeURIComponent(item.title)}`;
+            const lookupRes = await fetch(lookupUrl);
+            const lookupData = await lookupRes.json();
+            if (!lookupRes.ok || !lookupData.title) {
+              throw new Error(lookupData.error || `Metadata search failed (${lookupRes.status}).`);
+            }
+
+            const found = lookupData.title;
+            const merged = {
+              title: item.title,
+              kind: item.kind,
+              creator: found.creator || item.creator || '',
+              isbn: found.isbn || item.isbn || '',
+              barcode: found.barcode || item.barcode || '',
+              releaseYear: found.releaseYear || item.releaseYear || '',
+              coverUrl: found.coverUrl || item.coverUrl || '',
+              description: found.description || item.description || '',
+              catalogRating: item.catalogRating ?? '',
+              genres: item.genres || '',
+              tropes: item.tropes || '',
+              tags: item.tags || ''
+            };
+            const saveRes = await fetch(`${API}?route=/titles/${item.id}`, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authToken },
+              body: JSON.stringify(merged)
+            });
+            const saveData = await saveRes.json();
+            if (!saveRes.ok) {
+              throw new Error(saveData.error || `Saving metadata failed (${saveRes.status}).`);
+            }
+
+            if (merged.creator && merged.coverUrl && merged.description) {
+              completed++;
+              selectedQueueIds.delete(item.id);
+              catalogCache = catalogCache.filter(queuedItem => queuedItem.id !== item.id);
+              renderAdminQueueItems();
+              log.textContent += `Completed: ${item.title}\n`;
+            } else {
+              recordIssue(item, 'Metadata was found, but creator, cover, or synopsis is still missing; item remains queued.');
+            }
+          } catch (error) {
+            recordIssue(item, error.message || 'Unknown lookup or save error.');
+          }
+        }
+
+        status.textContent = `Finished: ${completed} completed; ${failures.length} skipped or still incomplete.`;
+        if (completed > 0) {
+          await loadCatalog();
+          await loadAdminQueue();
+        }
+      } finally {
+        button.disabled = false;
+      }
+    }
+
+    function toggleQueueItem(id, selected) {
+      if (selected) selectedQueueIds.add(id);
+      else selectedQueueIds.delete(id);
+      updateQueueSelectionUI();
+    }
+
+    function selectAllQueueItems(selected) {
+      selectedQueueIds = selected ? new Set(catalogCache.map(item => item.id)) : new Set();
+      document.querySelectorAll('.queue-item-select').forEach(input => { input.checked = selected; });
+      updateQueueSelectionUI();
+    }
+
+    function updateQueueSelectionUI() {
+      const count = document.getElementById('queue-selection-count');
+      const selectAll = document.getElementById('queue-select-all');
+      if (count) count.innerText = `${selectedQueueIds.size} selected`;
+      if (selectAll) {
+        selectAll.checked = catalogCache.length > 0 && selectedQueueIds.size === catalogCache.length;
+        selectAll.indeterminate = selectedQueueIds.size > 0 && selectedQueueIds.size < catalogCache.length;
+      }
+    }
+
+    async function applyBulkQueueEdit() {
+      const ids = [...selectedQueueIds];
+      if (ids.length === 0) { alert('Select at least one queue item.'); return; }
+
+      const fields = {};
+      const bulkFields = [
+        ['kind', 'bulk-apply-kind', 'bulk-kind'],
+        ['creator', 'bulk-apply-creator', 'bulk-creator'],
+        ['releaseYear', 'bulk-apply-year', 'bulk-year'],
+        ['catalogRating', 'bulk-apply-rating', 'bulk-rating'],
+        ['genres', 'bulk-apply-genres', 'bulk-genres'],
+        ['tropes', 'bulk-apply-tropes', 'bulk-tropes'],
+        ['tags', 'bulk-apply-tags', 'bulk-tags'],
+        ['coverUrl', 'bulk-apply-cover', 'bulk-cover'],
+        ['description', 'bulk-apply-description', 'bulk-description'],
+      ];
+      for (const [field, checkboxId, inputId] of bulkFields) {
+        if (document.getElementById(checkboxId).checked) {
+          fields[field] = document.getElementById(inputId).value.trim();
+        }
+      }
+      if (Object.keys(fields).length === 0) { alert('Choose at least one field to apply.'); return; }
+      if (!window.confirm(`Apply the selected values to ${ids.length} title${ids.length === 1 ? '' : 's'}?`)) return;
+
+      const button = document.querySelector('#admin-sec-queue button[onclick="applyBulkQueueEdit()"]');
+      button.disabled = true;
+      try {
+        const res = await fetch(`${API}?route=/admin/titles/bulk-update`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authToken },
+          body: JSON.stringify({ ids, fields })
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          alert(data.error || 'Bulk update failed.');
+          return;
+        }
+        selectedQueueIds.clear();
+        alert(`${data.message} ${data.updated} title${data.updated === 1 ? '' : 's'} changed.`);
+        await loadAdminQueue();
+      } catch (error) {
+        alert(`Bulk update failed: ${error.message}`);
+      } finally {
+        button.disabled = false;
+      }
+    }
+
+    // --- BULK MEDIA IMPORT PARSER & SCHEMA ANALYZER ---
+    function handleBulkFileSelect(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      const isExcel = file.name.endsWith('.xlsx') || file.name.endsWith('.xls');
+
+      if (isExcel) {
+        reader.onload = (evt) => {
+          try {
+            const data = new Uint8Array(evt.target.result);
+            const workbook = XLSX.read(data, { type: 'array' });
+            const sheetName = workbook.SheetNames[0];
+            const sheet = workbook.Sheets[sheetName];
+            const jsonRows = XLSX.utils.sheet_to_json(sheet, { defval: '' });
+            processStagedData(jsonRows);
+          } catch (err) {
+            alert('Failed to parse Excel workbook: ' + err.message);
+          }
+        };
+        reader.readAsArrayBuffer(file);
+      } else {
+        // Plain CSV
+        reader.onload = (evt) => {
+          try {
+            const text = evt.target.result;
+            const workbook = XLSX.read(text, { type: 'string' });
+            const sheetName = workbook.SheetNames[0];
+            const jsonRows = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], { defval: '' });
+            processStagedData(jsonRows);
+          } catch (err) {
+            alert('Failed to parse CSV: ' + err.message);
+          }
+        };
+        reader.readAsText(file);
+      }
+    }
+
+    async function fetchGoogleSheetData() {
+      const url = document.getElementById('bulk-gsheet-url').value.trim();
+      if (!url) { alert('Please enter a Google Sheet URL.'); return; }
+
+      // Auto-convert standard spreadsheet view links to CSV export link if needed
+      let csvUrl = url;
+      if (url.includes('/edit') || url.includes('/view')) {
+        csvUrl = url.replace(/\/edit.*$/, '/export?format=csv').replace(/\/view.*$/, '/export?format=csv');
+      }
+
+      try {
+        const res = await fetch(csvUrl);
+        if (!res.ok) throw new Error('Could not download spreadsheet. Ensure link is "Published to web" or set to Anyone with link.');
+        const csvText = await res.text();
+        const workbook = XLSX.read(csvText, { type: 'string' });
+        const sheetName = workbook.SheetNames[0];
+        const jsonRows = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], { defval: '' });
+        processStagedData(jsonRows);
+      } catch (err) {
+        alert('Google Sheet Fetch Error: ' + err.message);
+      }
+    }
+
+    async function processStagedData(rows) {
+      if (!rows || rows.length === 0) { alert('File is empty or contains no records.'); return; }
+      
+      stagedParsedRows = rows;
+      const headers = Object.keys(rows[0] || {});
+
+      // Call backend dry-run analysis
+      const res = await fetch(`${API}?route=/admin/media/bulk-analyze`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
+        body: JSON.stringify({ headers, rows })
+      });
+      const data = await res.json();
+      if (!res.ok) { alert(data.error || 'Analysis failed.'); return; }
+
+      // Update Analysis HUD
+      document.getElementById('bulk-analysis-results').classList.remove('hidden');
+      document.getElementById('bulk-stats-text').innerHTML = `
+        Found <strong>${data.total_rows}</strong> total entries in file. <br>
+        ✅ <strong>${data.new_records}</strong> new titles ready to import. &nbsp;|&nbsp; 
+        🛑 <strong>${data.duplicate_records}</strong> duplicates already in database (will be skipped).
+      `;
+
+      // Handle Unknown Columns / Schema Expansion Review
+      const reviewBox = document.getElementById('bulk-schema-review-box');
+      const missingList = document.getElementById('bulk-missing-cols-list');
+      stagedMissingCols = data.missing_columns || [];
+
+      if (stagedMissingCols.length > 0) {
+        reviewBox.classList.remove('hidden');
+        missingList.innerHTML = stagedMissingCols.map(col => `
+          <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(0,0,0,0.4); padding:8px 12px; border-radius:8px; border:1px solid var(--border-glass);">
+            <div>
+              <strong style="color:#fff;">${escapeHtml(col.original_header)}</strong> &rarr; 
+              <code style="color:var(--neon-cyan);">${escapeHtml(col.column_name)}</code> 
+              <span style="font-size:0.75rem; color:var(--text-secondary); margin-left:8px;">(${col.suggested_type})</span>
+            </div>
+            <label style="display:flex; align-items:center; gap:6px; font-size:0.8rem; cursor:pointer;">
+              <input type="checkbox" class="chk-schema-add" data-col="${escapeHtml(col.column_name)}" checked />
+              Add column
+            </label>
+          </div>
+        `).join('');
+      } else {
+        reviewBox.classList.add('hidden');
+      }
+    }
+
+    async function approveAndApplySchemaChanges() {
+      const selected = Array.from(document.querySelectorAll('.chk-schema-add:checked')).map(el => el.dataset.col);
+      if (selected.length === 0) {
+        document.getElementById('bulk-schema-review-box').classList.add('hidden');
+        return;
+      }
+
+      const res = await fetch(`${API}?route=/admin/media/apply-schema-changes`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
+        body: JSON.stringify({ columns: selected })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        alert(data.message || 'Database schema successfully updated!');
+        document.getElementById('bulk-schema-review-box').classList.add('hidden');
+      } else {
+        alert(data.error || 'Failed to update schema.');
+      }
+    }
+
+    async function executeFinalBulkImport() {
+      if (!stagedParsedRows || stagedParsedRows.length === 0) { alert('No parsed rows to import.'); return; }
+      
+      const btn = document.getElementById('btn-execute-import');
+      btn.innerText = 'Ingesting... ⏳';
+      btn.disabled = true;
+
+      const res = await fetch(`${API}?route=/admin/media/bulk-import`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
+        body: JSON.stringify({ rows: stagedParsedRows })
+      });
+      const data = await res.json();
+      btn.innerText = '🚀 Start Ingestion';
+      btn.disabled = false;
+
+      if (res.ok) {
+        alert(data.message || 'Bulk import successful!');
+        document.getElementById('bulk-analysis-results').classList.add('hidden');
+        document.getElementById('bulk-file-input').value = '';
+        document.getElementById('bulk-gsheet-url').value = '';
+        stagedParsedRows = [];
+        await loadCatalog();
+      } else {
+        alert(data.error || 'Failed to import records.');
+      }
+    }
+
+    // --- Members Directory ---
+    async function loadMembersDirectory() {
+      const res = await fetch(`${API}?route=/users`);
+      const users = (await res.json()).users || [];
+      const grid = document.getElementById('members-grid');
+      if (users.length === 0) { grid.innerHTML = `<div class="glass-panel" style="grid-column: 1/-1; text-align: center;">No members found.</div>`; return; }
+      grid.innerHTML = users.map(u => `
+        <div class="glass-panel" style="display:flex; flex-direction:column; align-items:center; text-align:center; gap:10px; cursor:pointer;" onclick="openUserShelf(${u.id})">
+          ${renderAvatar(u, 64, 1.8)}
+          <div>
+            <strong>${escapeHtml(u.name)}</strong>
+            ${u.username ? `<div style="font-size:0.8rem; color:var(--text-secondary);">@${escapeHtml(u.username)}</div>` : ''}
+            <span class="role-tag role-${escapeHtml(u.role)}" style="margin-top:4px; display:inline-block;">${escapeHtml(u.role)}</span>
+          </div>
+          <div style="font-size:0.82rem; color:var(--text-secondary); margin-top:4px;">
+            📚 ${u.libraryCount} saved • 🌶️ ${u.reviewCount} reviews
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // --- Relationships & Inbox System ---
+    async function loadInbox() {
+      if (!authToken) return;
+      const res = await fetch(`${API}?route=/messages/inbox`, { headers: { 'Authorization': `Bearer ${authToken}` } });
+      const data = await res.json();
+      const main = document.getElementById('inbox-main-content');
+      main.innerHTML = `<div class="glass-panel"><h2 style="margin-bottom: 16px;">Direct Messages</h2>
+        ${!data.inbox || data.inbox.length === 0 ? `<p style="color:var(--text-secondary);">No messages yet. Find friends in the directory to start chatting!</p>` : 
+          data.inbox.map(m => `
+            <div class="inbox-row" onclick="openChat(${m.partnerId}, '${escapeHtml(m.partnerName)}')">
+              ${renderAvatar(m, 42, 1.2)}
+              <div style="flex:1;">
+                <div style="display:flex; justify-content:space-between;">
+                  <strong style="font-size:1.05rem;">${escapeHtml(m.partnerName)}</strong>
+                  <span style="font-size:0.75rem; color:var(--text-secondary);">${new Date(m.lastMessageAt).toLocaleDateString()}</span>
+                </div>
+                <div style="font-size:0.88rem; color:${!m.isRead && m.senderId !== currentUser.id ? 'var(--neon-cyan)' : 'var(--text-secondary)'}; font-weight:${!m.isRead && m.senderId !== currentUser.id ? '700' : 'normal'};">
+                  ${m.senderId === currentUser.id ? 'You: ' : ''}${formatContent(m.lastMessage)}
+                </div>
+              </div>
+            </div>
+          `).join('')}
+      </div>`;
+    }
+
+    async function openChat(partnerId, partnerName) {
+      if (chatPollTimer) clearInterval(chatPollTimer);
+      currentChatPartnerId = partnerId;
+      document.getElementById('inbox-main-content').innerHTML = `
+        <div class="glass-panel" style="display:flex; flex-direction:column; height: 600px; padding:0;">
+          <div style="padding:16px; border-bottom:1px solid var(--border-glass); display:flex; justify-content:space-between; align-items:center;">
+             <h3 style="margin:0; cursor:pointer;" onclick="openUserShelf(${partnerId})">${escapeHtml(partnerName)}</h3>
+             <button class="btn btn-sm" onclick="loadInbox()">🔙 Back</button>
+          </div>
+          <div id="chat-messages" style="flex:1; padding:16px; overflow-y:auto; display:flex; flex-direction:column;"></div>
+          <div style="padding:16px; border-top:1px solid var(--border-glass);">
+             <form onsubmit="sendMessage(event, ${partnerId})" style="display:flex; gap:10px;">
+                <input type="text" id="chat-input" placeholder="Type a message or drop a GIF link..." required style="flex:1; background:#080811; border:1px solid var(--border-glass); color:#fff; padding:10px 14px; border-radius:10px; font-size:0.92rem;" />
+                <button type="submit" class="btn btn-fire">Send</button>
+             </form>
+          </div>
+        </div>
+      `;
+      await fetchChatMessages();
+      chatPollTimer = setInterval(fetchChatMessages, 5000); 
+    }
+
+    async function fetchChatMessages() {
+      if (!currentChatPartnerId) return;
+      const res = await fetch(`${API}?route=/messages/${currentChatPartnerId}`, { headers: { 'Authorization': `Bearer ${authToken}` } });
+      if (!res.ok) return;
+      const container = document.getElementById('chat-messages'); if (!container) return;
+      const data = await res.json();
+      
+      const shouldScroll = container.scrollTop + container.clientHeight >= container.scrollHeight - 10;
+      container.innerHTML = (!data.messages || data.messages.length === 0) ? `<p style="text-align:center; color:var(--text-secondary); margin-top:20px;">Say hello! 👋</p>` :
+        data.messages.map(m => `
+          <div class="chat-bubble ${m.senderId === currentUser.id ? 'sent' : 'received'}" title="${new Date(m.createdAt).toLocaleString()}">
+            ${formatContent(m.content)}
+          </div>
+        `).join('');
+      if (shouldScroll || data.messages.length <= 10) container.scrollTop = container.scrollHeight;
+    }
+
+    async function sendMessage(e, receiverId) {
+      e.preventDefault();
+      const input = document.getElementById('chat-input');
+      const res = await fetch(`${API}?route=/messages/${receiverId}`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
+        body: JSON.stringify({ content: input.value.trim() })
+      });
+      if (res.ok) { input.value = ''; fetchChatMessages(); } else alert((await res.json()).error || 'Failed to send message.');
+    }
+
+    async function loadFriendsList() {
+      const res = await fetch(`${API}?route=/friends`, { headers: { 'Authorization': `Bearer ${authToken}` } });
+      const data = await res.json();
+      const friends = data.friends || [];
+      const pending = friends.filter(f => f.status === 'pending');
+      const accepted = friends.filter(f => f.status === 'accepted');
+
+      let html = `<div class="glass-panel"><h2 style="margin-bottom: 16px;">Friends</h2>`;
+      if (pending.length > 0) {
+          html += `<h4 style="color:var(--neon-gold); margin-bottom:8px;">Pending Requests</h4>`;
+          html += pending.map(f => `<div class="friend-row">
+              <div style="display:flex; align-items:center; gap:10px; cursor:pointer;" onclick="openUserShelf(${f.id})">${renderAvatar(f, 32, 0.9)} <strong>${escapeHtml(f.name)}</strong></div>
+              <div>${f.requesterId !== currentUser.id ? `<button class="btn btn-sm btn-fire" onclick="acceptFriend(${f.id})">Accept</button>` : `<span style="color:var(--text-secondary); font-size:0.8rem; margin-right:10px;">Sent</span>`}<button class="btn btn-sm" onclick="removeFriend(${f.id})">✕</button></div>
+            </div>`).join('');
+          html += `<hr style="border:none; border-top:1px solid var(--border-glass); margin:16px 0;" />`;
+      }
+
+      html += `<h4 style="margin-bottom:8px;">My Friends (${accepted.length})</h4>`;
+      if (accepted.length === 0) html += `<p style="color:var(--text-secondary);">No friends yet.</p>`;
+      else {
+          html += accepted.map(f => `<div class="friend-row">
+              <div style="display:flex; align-items:center; gap:10px; cursor:pointer;" onclick="openUserShelf(${f.id})">${renderAvatar(f, 32, 0.9)} <strong>${escapeHtml(f.name)}</strong></div>
+              <div><button class="btn btn-sm btn-fire" onclick="openChat(${f.id}, '${escapeHtml(f.name)}')">Message</button><button class="btn btn-sm" onclick="removeFriend(${f.id})">Remove</button></div>
+            </div>`).join('');
+      }
+      document.getElementById('inbox-main-content').innerHTML = html + `</div>`;
+    }
+
+    async function loadBlockList() {
+      const res = await fetch(`${API}?route=/blocks`, { headers: { 'Authorization': `Bearer ${authToken}` } });
+      const blocks = (await res.json()).blocks || [];
+      let html = `<div class="glass-panel"><h2 style="margin-bottom: 16px; color:var(--neon-crimson);">Blocked Users</h2>`;
+      if (blocks.length === 0) html += `<p style="color:var(--text-secondary);">You haven't blocked anyone.</p>`;
+      else {
+          html += blocks.map(b => `<div class="friend-row"><div style="display:flex; align-items:center; gap:10px;">${renderAvatar(b, 32, 0.9)} <strong>${escapeHtml(b.name)}</strong></div><button class="btn btn-sm" onclick="unblockUser(${b.id})">Unblock</button></div>`).join('');
+      }
+      document.getElementById('inbox-main-content').innerHTML = html + `</div>`;
+    }
+    
+    async function sendFriendRequest(userId) { if (!authToken) { openAuthModal(); return; }
+      const res = await fetch(`${API}?route=/friends/request`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` }, body: JSON.stringify({ friendId: userId }) });
+      if (res.ok) openUserShelf(userId); else alert((await res.json()).error);
+    }
+    async function acceptFriend(userId) {
+      if ((await fetch(`${API}?route=/friends/${userId}/accept`, { method: 'PUT', headers: { 'Authorization': `Bearer ${authToken}` } })).ok) {
+          const tab = document.querySelector('.nav-tab.active'); if (tab && tab.id === 'tab-inbox') loadFriendsList(); else openUserShelf(userId);
+      }
+    }
+    async function removeFriend(userId) {
+      if(!confirm('Are you sure?')) return;
+      if ((await fetch(`${API}?route=/friends/${userId}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${authToken}` } })).ok) {
+          const tab = document.querySelector('.nav-tab.active'); if (tab && tab.id === 'tab-inbox') loadFriendsList(); else openUserShelf(userId);
+      }
+    }
+    async function blockUser(userId) {
+      if(!confirm('Block this user? They will be removed from your friends.')) return;
+      if ((await fetch(`${API}?route=/blocks`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` }, body: JSON.stringify({ blockId: userId }) })).ok) openUserShelf(userId);
+    }
+    async function unblockUser(userId) {
+      if ((await fetch(`${API}?route=/blocks/${userId}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${authToken}` } })).ok) {
+          const tab = document.querySelector('.nav-tab.active'); if (tab && tab.id === 'tab-inbox') loadBlockList(); else openUserShelf(userId);
+      }
+    }
+
+    // --- Catalog ---
+    function renderSpiceMeter(spiceVal) {
+      const level = spiceVal !== null && spiceVal !== undefined ? Math.round(Number(spiceVal)) : 0;
+      let bars = '';
+      for (let i = 1; i <= 5; i++) bars += `<div class="spice-seg ${i <= level ? 'hot' : ''}"></div>`;
+      return `<div class="spice-meter-bar" title="Spice Level: ${spiceVal ?? 'Unrated'} / 5">${bars}</div>`;
+    }
+    function renderChilis(spiceVal) { return spiceVal === null || spiceVal === undefined ? 'Unrated 🌶️' : `${Number(spiceVal).toFixed(1)} 🌶️`; }
+    function debounceCatalog() { clearTimeout(searchTimer); searchTimer = setTimeout(loadCatalog, 280); }
+
+    function setCatalogViewMode(mode) {
+      catalogViewMode = mode;
+      document.getElementById('btn-mode-swarm').classList.toggle('active', mode === 'swarm');
+      document.getElementById('btn-mode-shelf').classList.toggle('active', mode === 'shelf');
+      document.getElementById('btn-mode-grid').classList.toggle('active', mode === 'grid');
+
+      document.getElementById('catalog-swarm-stage').classList.toggle('hidden', mode !== 'swarm');
+      document.getElementById('catalog-swarm-controls').classList.toggle('hidden', mode !== 'swarm');
+      document.getElementById('catalog-shelf-container').classList.toggle('hidden', mode !== 'shelf');
+      document.getElementById('catalog-grid').classList.toggle('hidden', mode !== 'grid');
+
+      if (mode === 'swarm') {
+        resizeSwarmCanvas();
+        startSwarmAnimation();
+      } else {
+        stopSwarmAnimation();
+      }
+      renderCatalogView();
+    }
+
+    async function loadCatalog() {
+      const q = document.getElementById('catalog-search').value.trim();
+      const kind = document.getElementById('catalog-kind').value;
+      const minSpice = document.getElementById('catalog-spice').value;
+
+      let url = `${API}?route=/titles&q=${encodeURIComponent(q)}&kind=${encodeURIComponent(kind)}`;
+      if (minSpice !== '') url += minSpice === '0' ? `&maxSpice=0.4` : `&minSpice=${encodeURIComponent(minSpice)}`;
+
+      const res = await fetch(url);
+      catalogCache = (await res.json()).titles || [];
+      initSwarmNodes(catalogCache);
+      renderCatalogView();
+    }
+
+    function renderCatalogView() {
+      const grid = document.getElementById('catalog-grid');
+      const shelfContainer = document.getElementById('catalog-shelf-container');
+
+      if (catalogCache.length === 0) {
+        grid.innerHTML = `<div class="glass-panel" style="grid-column: 1/-1; text-align: center;">No media matched your filter. Click <strong>+ Add Media</strong> to add it!</div>`;
+        shelfContainer.innerHTML = `<div style="text-align: center; padding: 40px; color: var(--text-secondary);">No media on the shelves right now. Add one above!</div>`;
+        return;
+      }
+
+      // Render standard Grid
+      grid.innerHTML = catalogCache.map(item => `
+        <div class="media-card" onclick="pullMediaIntoView(${item.id})">
+          <div class="card-cover-wrap"><img class="card-cover" src="${escapeHtml(item.coverUrl || FALLBACK_COVER)}" onerror="this.src='${FALLBACK_COVER}'" />
+            <span class="kind-pill">${escapeHtml(item.kind)}</span><div class="spice-badge-overlay">${renderChilis(item.averageSpice)}</div>
+          </div>
+          <div class="card-body">
+            <div class="card-title">${escapeHtml(item.title)}</div><div class="card-creator">${item.creator ? renderDiscoveryLink('creator', item.creator, item.kind, item.creator) : 'Unknown'} ${item.releaseYear ? `• ${item.releaseYear}` : ''}</div>
+            ${item.genres ? `<div style="display:flex;flex-wrap:wrap;margin:-6px 0 8px;">${renderGenreDiscoveryLinks(item.genres)}</div>` : ''}
+            ${renderSpiceMeter(item.averageSpice)}
+            <div class="card-footer"><span class="rating-stars">★ ${item.averageRating ? item.averageRating.toFixed(1) : 'New'} <span style="color:var(--text-secondary);font-weight:400;">(${item.reviewCount})</span></span>
+              <button class="btn btn-sm" onclick="event.stopPropagation(); quickAddShelf(${item.id})">+ Shelf</button>
+            </div>
+          </div>
+        </div>`).join('');
+
+      // Render 3D Bookshelves
+      renderShelvesToContainer(shelfContainer, catalogCache, false);
+    }
+
+    // ==========================================
+    // --- FREE-FLOWING MEDIA SWARM SIMULATION --
+    // ==========================================
+    function updateSwarmPhysics() {
+      swarmPhysics.gravity = parseFloat(document.getElementById('slider-gravity').value);
+      swarmPhysics.repulsion = parseFloat(document.getElementById('slider-repulsion').value);
+      swarmPhysics.filamentReach = parseFloat(document.getElementById('slider-filaments').value);
+    }
+
+    function initSwarmCanvas() {
+      swarmCanvas = document.getElementById('swarm-canvas');
+      if (!swarmCanvas) return;
+      swarmCtx = swarmCanvas.getContext('2d');
+      resizeSwarmCanvas();
+
+      const stage = document.getElementById('catalog-swarm-stage');
+      const tooltip = document.getElementById('swarm-tooltip');
+
+      stage.addEventListener('mousemove', (e) => {
+        const rect = swarmCanvas.getBoundingClientRect();
+        const mouseX = e.clientX - rect.left;
+        const mouseY = e.clientY - rect.top;
+
+        if (draggedNode) {
+          draggedNode.x = mouseX;
+          draggedNode.y = mouseY;
+          draggedNode.vx = 0;
+          draggedNode.vy = 0;
+          return;
+        }
+
+        hoveredNode = findSwarmNodeAt(mouseX, mouseY);
+        if (hoveredNode) {
+          tooltip.style.left = `${mouseX}px`;
+          tooltip.style.top = `${mouseY}px`;
+          const attLabel = hoveredNode.attentionScore > 1.4 ? `<span style="color:var(--neon-crimson); font-weight:800;">🔥 POPULAR</span> • ` : '';
+          tooltip.innerHTML = `${attLabel}<strong>${escapeHtml(hoveredNode.title)}</strong><br><span style="color:${hoveredNode.theme.hex}; font-weight:700;">${escapeHtml(hoveredNode.creator || hoveredNode.kind.toUpperCase())}</span> • <span style="color:var(--neon-crimson);">${renderChilis(hoveredNode.averageSpice ?? hoveredNode.userSpice)}</span> • ★ ${(hoveredNode.averageRating || 0).toFixed(1)} (${hoveredNode.reviewCount})`;
+          tooltip.style.opacity = '1';
+        } else {
+          tooltip.style.opacity = '0';
+        }
+      });
+
+      stage.addEventListener('mousedown', (e) => {
+        const rect = swarmCanvas.getBoundingClientRect();
+        const mouseX = e.clientX - rect.left;
+        const mouseY = e.clientY - rect.top;
+        const node = findSwarmNodeAt(mouseX, mouseY);
+        if (node) {
+          draggedNode = node;
+          draggedNode.hasDragged = false;
+          draggedNode.startX = mouseX;
+          draggedNode.startY = mouseY;
+        }
+      });
+
+      window.addEventListener('mouseup', (e) => {
+        if (draggedNode) {
+          const rect = swarmCanvas.getBoundingClientRect();
+          const mouseX = e.clientX - rect.left;
+          const mouseY = e.clientY - rect.top;
+          const dist = Math.hypot(mouseX - draggedNode.startX, mouseY - draggedNode.startY);
+
+          if (dist < 6) {
+            pullMediaIntoView(draggedNode.id);
+          }
+          draggedNode = null;
+        }
+      });
+
+      stage.addEventListener('mouseleave', () => {
+        hoveredNode = null;
+        draggedNode = null;
+        tooltip.style.opacity = '0';
+      });
+    }
+
+    function resizeSwarmCanvas() {
+      if (!swarmCanvas) return;
+      const rect = swarmCanvas.parentElement.getBoundingClientRect();
+      swarmCanvas.width = rect.width;
+      swarmCanvas.height = rect.height;
+    }
+
+    function initSwarmNodes(titles) {
+      if (!swarmCanvas) return;
+      const w = swarmCanvas.width || 800;
+      const h = swarmCanvas.height || 600;
+
+      const creatorCounts = {};
+      titles.forEach(t => {
+        if (t.creator) {
+          const c = t.creator.trim().toLowerCase();
+          creatorCounts[c] = (creatorCounts[c] || 0) + 1;
+        }
+      });
+
+      swarmNodes = titles.map((item, idx) => {
+        if (item.coverUrl && !coverImageCache[item.coverUrl]) {
+          const img = new Image();
+          img.src = item.coverUrl;
+          coverImageCache[item.coverUrl] = img;
+        }
+
+        const reviews = Number(item.reviewCount || 0);
+        const rating = Number(item.averageRating || 0);
+        const creatorFreq = item.creator ? (creatorCounts[item.creator.trim().toLowerCase()] || 1) : 1;
+        
+        const attentionScore = Math.min(2.4, 1.0 + (reviews * 0.12) + (rating > 4.0 ? 0.25 : 0) + (creatorFreq > 1 ? 0.2 : 0));
+        
+        const baseRadius = 24;
+        const radius = Math.round(baseRadius * Math.min(1.85, attentionScore));
+        const mass = Math.pow(attentionScore, 1.8);
+
+        const angle = (idx / titles.length) * Math.PI * 2;
+        const distFromCenter = Math.min(w, h) * 0.32 * Math.random() + 50;
+
+        return {
+          ...item,
+          theme: GENRE_COLORS[item.kind] || GENRE_COLORS.other,
+          attentionScore,
+          mass,
+          x: w / 2 + Math.cos(angle) * distFromCenter + (Math.random() - 0.5) * 60,
+          y: h / 2 + Math.sin(angle) * distFromCenter + (Math.random() - 0.5) * 60,
+          vx: (Math.random() - 0.5) * 0.8,
+          vy: (Math.random() - 0.5) * 0.8,
+          radius,
+          pulseOffset: Math.random() * Math.PI * 2,
+        };
+      });
+    }
+
+    function findSwarmNodeAt(x, y) {
+      for (let i = swarmNodes.length - 1; i >= 0; i--) {
+        const node = swarmNodes[i];
+        if (Math.hypot(node.x - x, node.y - y) <= node.radius + 6) {
+          return node;
+        }
+      }
+      return null;
+    }
+
+    function startSwarmAnimation() {
+      if (swarmAnimId) cancelAnimationFrame(swarmAnimId);
+      animateSwarm();
+    }
+
+    function stopSwarmAnimation() {
+      if (swarmAnimId) cancelAnimationFrame(swarmAnimId);
+      swarmAnimId = null;
+    }
+
+    function animateSwarm() {
+      if (!swarmCtx || !swarmCanvas) return;
+      const w = swarmCanvas.width;
+      const h = swarmCanvas.height;
+
+      swarmCtx.clearRect(0, 0, w, h);
+
+      for (let i = 0; i < swarmNodes.length; i++) {
+        for (let j = i + 1; j < swarmNodes.length; j++) {
+          const a = swarmNodes[i];
+          const b = swarmNodes[j];
+          const dx = b.x - a.x;
+          const dy = b.y - a.y;
+          const dist = Math.hypot(dx, dy);
+
+          let affinity = 0;
+          let isSameAuthor = false;
+          let isSameGenre = (a.kind === b.kind);
+
+          if (isSameGenre) affinity += 1;
+          if (a.creator && b.creator && a.creator.toLowerCase() === b.creator.toLowerCase()) {
+            affinity += 2.5;
+            isSameAuthor = true;
+          }
+          const spiceA = a.averageSpice ?? a.userSpice ?? 0;
+          const spiceB = b.averageSpice ?? b.userSpice ?? 0;
+          if (Math.abs(spiceA - spiceB) <= 0.8) affinity += 0.8;
+
+          const maxDist = affinity > 0 ? (swarmPhysics.filamentReach * 1.2) : swarmPhysics.filamentReach;
+
+          if (dist < maxDist && dist > 1) {
+            const alpha = (1 - dist / maxDist) * (affinity > 0 ? 0.45 : 0.14);
+            swarmCtx.beginPath();
+            swarmCtx.moveTo(a.x, a.y);
+            swarmCtx.lineTo(b.x, b.y);
+
+            if (isSameAuthor) {
+              swarmCtx.strokeStyle = `rgba(255, 42, 84, ${alpha * 1.2})`;
+              swarmCtx.lineWidth = 2.2;
+            } else if (isSameGenre) {
+              swarmCtx.strokeStyle = `rgba(${a.theme.rgb}, ${alpha})`;
+              swarmCtx.lineWidth = 1.4;
+            } else {
+              const grad = swarmCtx.createLinearGradient(a.x, a.y, b.x, b.y);
+              grad.addColorStop(0, `rgba(${a.theme.rgb}, ${alpha})`);
+              grad.addColorStop(1, `rgba(${b.theme.rgb}, ${alpha})`);
+              swarmCtx.strokeStyle = grad;
+              swarmCtx.lineWidth = 0.9;
+            }
+            swarmCtx.stroke();
+
+            if (affinity > 0 && dist > swarmPhysics.repulsion) {
+              const pullStrength = (dist - swarmPhysics.repulsion) * 0.000035 * affinity;
+              if (a !== draggedNode) {
+                a.vx += (dx / dist) * pullStrength * b.mass;
+                a.vy += (dy / dist) * pullStrength * b.mass;
+              }
+              if (b !== draggedNode) {
+                b.vx -= (dx / dist) * pullStrength * a.mass;
+                b.vy -= (dy / dist) * pullStrength * a.mass;
+              }
+            }
+          }
+
+          const minDist = a.radius + b.radius + 12;
+          if (dist < minDist && dist > 0) {
+            const overlap = minDist - dist;
+            const repulseForce = overlap * 0.04;
+            const nx = dx / dist;
+            const ny = dy / dist;
+            if (a !== draggedNode) { a.vx -= nx * repulseForce; a.vy -= ny * repulseForce; }
+            if (b !== draggedNode) { b.vx += nx * repulseForce; b.vy += ny * repulseForce; }
+          }
+        }
+      }
+
+      const time = performance.now() * 0.001;
+      swarmNodes.forEach(node => {
+        if (node !== draggedNode) {
+          node.vx += Math.cos(time + node.pulseOffset) * 0.024;
+          node.vy += Math.sin(time + node.pulseOffset * 1.4) * 0.024;
+
+          const cx = w / 2;
+          const cy = h / 2;
+          node.vx += (cx - node.x) * swarmPhysics.gravity;
+          node.vy += (cy - node.y) * swarmPhysics.gravity;
+
+          node.vx *= 0.984;
+          node.vy *= 0.984;
+
+          node.x += node.vx;
+          node.y += node.vy;
+
+          const pad = node.radius + 12;
+          if (node.x < pad) { node.x = pad; node.vx *= -0.7; }
+          if (node.x > w - pad) { node.x = w - pad; node.vx *= -0.7; }
+          if (node.y < pad) { node.y = pad; node.vy *= -0.7; }
+          if (node.y > h - pad) { node.y = h - pad; node.vy *= -0.7; }
+        }
+
+        const isHovered = (node === hoveredNode || node === draggedNode);
+        const r = isHovered ? node.radius * 1.18 : node.radius;
+
+        swarmCtx.save();
+        swarmCtx.beginPath();
+        swarmCtx.arc(node.x, node.y, r + (node.attentionScore > 1.3 ? 12 : 5), 0, Math.PI * 2);
+        if (node.attentionScore > 1.4) {
+          swarmCtx.fillStyle = isHovered ? 'rgba(255, 42, 84, 0.65)' : 'rgba(255, 107, 43, 0.35)';
+        } else {
+          swarmCtx.fillStyle = isHovered ? `rgba(${node.theme.rgb}, 0.5)` : `rgba(${node.theme.rgb}, 0.18)`;
+        }
+        swarmCtx.fill();
+
+        swarmCtx.beginPath();
+        swarmCtx.arc(node.x, node.y, r, 0, Math.PI * 2);
+        swarmCtx.clip();
+
+        const img = coverImageCache[node.coverUrl];
+        if (img && img.complete && img.naturalWidth !== 0) {
+          swarmCtx.drawImage(img, node.x - r, node.y - r, r * 2, r * 2);
+        } else {
+          swarmCtx.fillStyle = '#141424';
+          swarmCtx.fillRect(node.x - r, node.y - r, r * 2, r * 2);
+          swarmCtx.fillStyle = node.theme.hex;
+          swarmCtx.font = 'bold 15px sans-serif';
+          swarmCtx.textAlign = 'center';
+          swarmCtx.textBaseline = 'middle';
+          swarmCtx.fillText('🌶️', node.x, node.y);
+        }
+        swarmCtx.restore();
+
+        swarmCtx.beginPath();
+        swarmCtx.arc(node.x, node.y, r, 0, Math.PI * 2);
+        swarmCtx.lineWidth = isHovered ? 3.5 : (node.attentionScore > 1.3 ? 2.8 : 1.6);
+        swarmCtx.strokeStyle = isHovered ? '#ffffff' : node.theme.hex;
+        swarmCtx.stroke();
+
+        if (node.attentionScore > 1.4 && !isHovered) {
+          swarmCtx.beginPath();
+          swarmCtx.arc(node.x + r * 0.7, node.y - r * 0.7, 7, 0, Math.PI * 2);
+          swarmCtx.fillStyle = '#ff2a54';
+          swarmCtx.fill();
+        }
+      });
+
+      swarmAnimId = requestAnimationFrame(animateSwarm);
+    }
+
+    // --- Bookshelf Renderer & Drag-to-Scroll Engine ---
+    function renderShelvesToContainer(containerEl, items, isPersonalShelf = false) {
+      if (!items || items.length === 0) {
+        containerEl.innerHTML = `<div style="text-align: center; padding: 40px; color: var(--text-secondary);">Shelf is empty.</div>`;
+        return;
+      }
+
+      const chunkSize = 10;
+      const tiers = [];
+      for (let i = 0; i < items.length; i += chunkSize) {
+        tiers.push(items.slice(i, i + chunkSize));
+      }
+
+      containerEl.innerHTML = tiers.map((tier, idx) => `
+        <div class="shelf-row">
+          <div class="shelf-scroll-area" id="shelf-row-${idx}">
+            ${tier.map(item => {
+              const id = item.titleId || item.id;
+              const spice = item.averageSpice ?? item.userSpice;
+              return `
+                <div class="shelf-item" data-id="${id}" onclick="pullMediaIntoView(${id})" title="Click to inspect front & back cover">
+                  <div class="shelf-item-spine">
+                    <img class="shelf-item-cover" src="${escapeHtml(item.coverUrl || FALLBACK_COVER)}" onerror="this.src='${FALLBACK_COVER}'" />
+                    <span class="shelf-item-tag">${spice !== null && spice !== undefined ? `${Number(spice).toFixed(1)} 🌶️` : '✨'}</span>
+                  </div>
+                </div>
+              `;
+            }).join('')}
+          </div>
+          <div class="shelf-wood-plank"></div>
+        </div>
+      `).join('');
+
+      tiers.forEach((_, idx) => {
+        const rowEl = document.getElementById(`shelf-row-${idx}`);
+        if (rowEl) attachDragToScroll(rowEl);
+      });
+    }
+
+    function attachDragToScroll(el) {
+      let isDown = false;
+      let startX;
+      let scrollLeft;
+      let moved = false;
+
+      el.addEventListener('mousedown', (e) => {
+        isDown = true;
+        moved = false;
+        startX = e.pageX - el.offsetLeft;
+        scrollLeft = el.scrollLeft;
+      });
+
+      el.addEventListener('mouseleave', () => { isDown = false; });
+      el.addEventListener('mouseup', () => { isDown = false; });
+
+      el.addEventListener('mousemove', (e) => {
+        if (!isDown) return;
+        e.preventDefault();
+        const x = e.pageX - el.offsetLeft;
+        const walk = (x - startX) * 1.5;
+        if (Math.abs(walk) > 6) moved = true;
+        el.scrollLeft = scrollLeft - walk;
+      });
+
+      el.addEventListener('click', (e) => {
+        if (moved) {
+          e.stopPropagation();
+          e.preventDefault();
+        }
+      }, true);
+    }
+
+    // --- Floating 3D Showcase & Cover Flip Controller ---
+    function pullMediaIntoView(titleId) {
+      const item = catalogCache.find(t => t.id === titleId) || 
+                   currentShelfItems.find(t => (t.titleId || t.id) === titleId);
+      if (!item) return;
+
+      activeInspectedItem = item;
+      const stage = document.getElementById('inspect-stage');
+      const card = document.getElementById('held-card');
+
+      card.classList.remove('is-flipped');
+
+      document.getElementById('inspect-title').innerText = item.title;
+      document.getElementById('inspect-creator').innerText = item.creator ? `By ${item.creator}` : (item.kind || '').toUpperCase();
+      document.getElementById('held-card-cover-img').src = item.coverUrl || FALLBACK_COVER;
+      document.getElementById('held-back-kind').innerText = (item.kind || 'media').toUpperCase();
+      
+      const spiceVal = item.averageSpice ?? item.userSpice;
+      document.getElementById('held-back-spice').innerText = spiceVal !== null && spiceVal !== undefined ? `${Number(spiceVal).toFixed(1)} 🌶️` : 'Unrated 🌶️';
+      document.getElementById('held-back-desc').innerText = item.description || "No synopsis available for the back cover. Add one in metadata edit!";
+      document.getElementById('held-back-isbn').innerText = item.isbn ? `ISBN: ${item.isbn}` : '';
+      document.getElementById('held-back-year').innerText = item.releaseYear ? `Year: ${item.releaseYear}` : '';
+
+      stage.classList.add('active');
+    }
+
+    function toggleBookFlip() {
+      const card = document.getElementById('held-card');
+      if (card) card.classList.toggle('is-flipped');
+    }
+
+    function putMediaBackOnShelf() {
+      const stage = document.getElementById('inspect-stage');
+      stage.classList.remove('active');
+      activeInspectedItem = null;
+    }
+
+    function handleStageBackdropClick(e) {
+      if (e.target.id === 'inspect-stage') {
+        putMediaBackOnShelf();
+      }
+    }
+
+    function openHeldFullDetails() {
+      if (!activeInspectedItem) return;
+      const id = activeInspectedItem.titleId || activeInspectedItem.id;
+      putMediaBackOnShelf();
+      openTitleDetail(id);
+    }
+
+    // --- Title Detail & Reviews ---
+    async function openTitleDetail(titleId) {
+      let item = catalogCache.find(t => t.id === titleId) || 
+                 currentShelfItems.find(t => (t.titleId || t.id) === titleId);
+
+      if (!item) {
+        const res = await fetch(`${API}?route=/titles&q=${titleId}`);
+        const data = await res.json();
+        item = (data.titles || []).find(t => t.id === titleId);
+      }
+      if (!item) return;
+
+      document.getElementById('detail-title').innerText = item.title;
+      document.getElementById('modal-detail').classList.remove('hidden');
+      const revData = await (await fetch(`${API}?route=${encodeURIComponent(`/titles/${titleId}/reviews`)}`)).json();
+      selectedSpice = 3;
+
+      document.getElementById('detail-content').innerHTML = `
+        <div style="display: grid; grid-template-columns: 180px 1fr; gap: 22px; margin-bottom: 24px;">
+          <img src="${escapeHtml(item.coverUrl || FALLBACK_COVER)}" style="width: 180px; height: 260px; object-fit: contain; border-radius: 12px; border: 1px solid var(--border-neon); background: #080811;" onerror="this.src='${FALLBACK_COVER}'" />
+          <div>
+            <div style="display: flex; gap: 10px; align-items: center; flex-wrap:wrap; margin-bottom: 8px;"><span class="role-tag role-moderator">${escapeHtml(item.kind)}</span><span style="color: var(--text-secondary); font-size: 0.9rem;">${item.creator ? renderDiscoveryLink('creator', item.creator, item.kind, item.creator) : ''} ${item.releaseYear ? `(${item.releaseYear})` : ''}</span></div>
+            <div style="display: flex; gap: 18px; margin: 14px 0; padding: 12px 16px; background: rgba(255,42,84,0.1); border: 1px solid var(--border-neon); border-radius: 12px;">
+              <div><div style="font-size: 0.75rem; color: var(--text-secondary);">HEAT</div><div style="font-size: 1.35rem; font-weight: 800; color: var(--neon-crimson);">${renderChilis(item.averageSpice ?? item.userSpice)}</div></div>
+              <div style="border-left: 1px solid var(--border-glass); padding-left: 18px;"><div style="font-size: 0.75rem; color: var(--text-secondary);">SCORE</div><div style="font-size: 1.35rem; font-weight: 800; color: var(--neon-gold);">★ ${item.averageRating ? item.averageRating.toFixed(1) : (item.userRating ? item.userRating.toFixed(1) : '—')}</div></div>
+            </div>
+            ${(item.catalogRating !== null && item.catalogRating !== undefined) || item.genres || item.tropes || item.tags ? `<div style="font-size:.84rem; line-height:1.55; margin-bottom:12px; color:var(--text-secondary);">
+              ${item.catalogRating !== null && item.catalogRating !== undefined ? `<div><strong style="color:var(--neon-gold);">Catalog rating:</strong> ${Number(item.catalogRating).toFixed(1)}/5</div>` : ''}
+              ${item.genres ? `<div><strong>Genres:</strong> ${renderGenreDiscoveryLinks(item.genres)}</div>` : ''}
+              ${item.tropes ? `<div><strong>Tropes:</strong> ${escapeHtml(item.tropes)}</div>` : ''}
+              ${item.tags ? `<div><strong>Tags:</strong> ${escapeHtml(item.tags)}</div>` : ''}
+            </div>` : ''}
+            <p style="color: var(--text-secondary); font-size: 0.92rem; line-height: 1.5; margin-bottom: 14px;">${formatContent(item.description || 'No synopsis added yet.')}</p>
+            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+              <button class="btn btn-sm" onclick="closeDetailModal(); pullMediaIntoView(${titleId});">🔍 Inspect 3D Cover</button>
+              <button class="btn btn-fire btn-sm" onclick="quickAddShelf(${titleId})">📚 Add to My Shelf</button>
+              ${currentUser && currentUser.role === 'admin' ? `<button class="btn btn-sm" style="color:var(--neon-cyan); border-color:var(--neon-cyan);" onclick="openEditTitleModal(${titleId})">✏️ Edit</button><button class="btn btn-sm" style="color:var(--neon-crimson); border-color:var(--border-neon);" onclick="deleteTitle(${titleId})">🗑️ Delete</button>` : ''}
+            </div>
+          </div>
+        </div>
+        <div class="glass-panel" style="margin-bottom: 22px;">
+          <h4 style="margin-bottom: 12px;">Rate the Spice & Leave a Review</h4>
+          <form onsubmit="submitReview(event, ${titleId})">
+            <div class="form-row"><label>How Spicy Is It?</label>
+              <div class="chili-selector" id="chili-picker">${[0,1,2,3,4,5].map(lvl => `<div class="chili-btn ${lvl === 3 ? 'selected' : ''}" onclick="selectSpiceLevel(${lvl})" data-lvl="${lvl}">${lvl} 🌶️</div>`).join('')}</div>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 12px;">
+              <div class="form-row"><label>Rating</label><select id="rev-rating"><option value="5">★★★★★ (5/5 Loved it)</option><option value="4">★★★★☆ (4/5 Great)</option><option value="3">★★★☆☆ (3/5 Good)</option><option value="2">★★☆☆☆ (2/5 Meh)</option><option value="1">★☆☆☆☆ (1/5 Skip)</option></select></div>
+              <div class="form-row"><label>Tropes (comma-separated)</label><input type="text" id="rev-warnings" placeholder="e.g. Enemies to Lovers" /></div>
+            </div>
+            <div class="form-row"><label>Your Review</label><textarea id="rev-notes" rows="3" required placeholder="What did you love or dislike? Paste a GIF if allowed!"></textarea></div>
+            <div style="display: flex; justify-content: space-between; align-items: center;"><label style="display: flex; align-items: center; gap: 8px; font-size: 0.85rem; cursor: pointer;"><input type="checkbox" id="rev-spoilers" style="width: auto;" /> Contains Spoilers</label><button type="submit" class="btn btn-fire">Post Review 🔥</button></div>
+          </form>
+        </div>
+        <h4 style="margin-bottom: 12px;">Community Spice Reports (${(revData.reviews || []).length})</h4>
+        <div style="display: flex; flex-direction: column; gap: 12px;">
+          ${(revData.reviews || []).map(r => `
+            <div class="comment-item" style="border: 1px solid var(--border-glass);">
+              <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+                <div style="display: flex; align-items: center; gap: 8px; cursor: pointer;" onclick="closeDetailModal(); openUserShelf(${r.userId});">
+                    ${renderAvatar(r, 24, 0.75)}
+                    <strong style="color: var(--neon-cyan);">${escapeHtml(r.reviewer)} ${r.reviewerUsername ? `<span style="color: var(--text-secondary); font-weight: normal; font-size: 0.8rem;">@${escapeHtml(r.reviewerUsername)}</span>` : ''}</strong>
+                </div>
+                <span><span style="color: var(--neon-crimson); font-weight: 700; margin-right: 10px;">${r.spiceLevel} 🌶️</span><span style="color: var(--neon-gold); font-weight: 700;">★ ${r.rating}/5</span></span>
+              </div>
+              ${r.warnings && r.warnings.length ? `<div style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px;">${r.warnings.map(w => `<span class="role-tag role-member">${escapeHtml(w)}</span>`).join('')}</div>` : ''}
+              <div class="${r.containsSpoilers ? 'spoiler-blur' : ''}" onclick="this.classList.add('revealed')" title="${r.containsSpoilers ? 'Click to reveal spoiler' : ''}">${formatContent(r.notes)}</div>
+            </div>`).join('')}
+        </div>`;
+    }
+
+    async function deleteTitle(titleId) {
+      if (!confirm("Permanently delete this media? Removes it from all shelves and deletes reviews.")) return;
+      if ((await fetch(`${API}?route=${encodeURIComponent(`/titles/${titleId}`)}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${authToken}` } })).ok) {
+        closeDetailModal(); const t = document.querySelector('.nav-tab.active');
+        if (t && t.id === 'tab-admin') loadAdminQueue(); else if (t && t.id === 'tab-library') openUserShelf(currentUser.id); else loadCatalog();
+      }
+    }
+
+    function selectSpiceLevel(lvl) {
+      selectedSpice = lvl; document.querySelectorAll('#chili-picker .chili-btn').forEach(btn => btn.classList.toggle('selected', Number(btn.dataset.lvl) === lvl));
+    }
+
+    async function submitReview(e, titleId) {
+      e.preventDefault(); if (!authToken) { openAuthModal(); return; }
+      const warnings = document.getElementById('rev-warnings').value.split(',').map(s => s.trim()).filter(Boolean);
+      const res = await fetch(`${API}?route=${encodeURIComponent(`/titles/${titleId}/reviews`)}`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
+        body: JSON.stringify({ rating: Number(document.getElementById('rev-rating').value), spiceLevel: selectedSpice, notes: document.getElementById('rev-notes').value.trim(), warnings, containsSpoilers: document.getElementById('rev-spoilers').checked })
+      });
+      if (!res.ok) { alert((await res.json()).error || 'Could not save review.'); return; }
+      if (document.querySelector('.nav-tab.active').id === 'tab-catalog') await loadCatalog();
+      openTitleDetail(titleId);
+    }
+    function closeDetailModal() { document.getElementById('modal-detail').classList.add('hidden'); }
+
+    // --- Community Lounge (Posts, Comments, Likes) ---
+    function populatePostTitleSelect() {
+      document.getElementById('post-linked-title').innerHTML = `<option value="">Link a Catalog Title (Optional)</option>` + catalogCache.map(t => `<option value="${t.id}">${escapeHtml(t.title)} (${t.kind})</option>`).join('');
+    }
+
+    async function loadCommunityPosts(category = '') {
+      const posts = (await (await fetch(`${API}?route=/community/posts${category ? `&category=${encodeURIComponent(category)}` : ''}`)).json()).posts || [];
+      const feed = document.getElementById('community-feed');
+      if (posts.length === 0) { feed.innerHTML = `<div class="glass-panel" style="text-align: center; color: var(--text-secondary);">No discussions in this channel yet. Kick off the conversation above!</div>`; return; }
+
+      feed.innerHTML = posts.map(p => `
+        <div class="post-card">
+          <div class="post-header">
+            <div class="post-author" onclick="openUserShelf(${p.authorId})">
+              ${renderAvatar(p, 30, 0.8)} <strong>${escapeHtml(p.authorName)}</strong>
+              ${p.authorUsername ? `<span style="color: var(--text-secondary); font-size: 0.8rem;">@${escapeHtml(p.authorUsername)}</span>` : ''}
+              <span class="role-tag role-${escapeHtml(p.authorRole)}">${escapeHtml(p.authorRole)}</span>
+            </div>
+            <span class="role-tag role-member">${escapeHtml(p.category.replace('_', ' / '))}</span>
+          </div>
+          <h3 style="margin-bottom: 8px; font-size: 1.15rem;">${escapeHtml(p.topic)}</h3>
+          <p style="color: var(--text-primary); line-height: 1.55; font-size: 0.94rem;">${formatContent(p.body)}</p>
+          ${p.linkedTitleId ? `<div class="linked-media-chip" onclick="pullMediaIntoView(${p.linkedTitleId})">🌶️ Linked Media: <strong>${escapeHtml(p.linkedTitleName)}</strong> (${escapeHtml(p.linkedTitleKind)})</div>` : ''}
+          <div style="display: flex; gap: 12px; align-items: center; margin-top: 14px;">
+            <button class="btn btn-sm" onclick="likePost(${p.id})">🔥 ${p.likesCount} Likes</button><span style="font-size: 0.8rem; color: var(--text-secondary);">${p.comments.length} Replies</span>
+          </div>
+          <div class="comment-list">
+            ${p.comments.map(c => `
+              <div class="comment-item">
+                <div style="display: flex; align-items: center; gap: 6px; cursor: pointer; color: var(--neon-cyan); margin-bottom: 4px;" onclick="openUserShelf(${c.authorId})">
+                  ${renderAvatar(c, 20, 0.7)} <strong>${escapeHtml(c.authorName)}</strong>
+                </div>
+                <div style="padding-left: 26px;">${formatContent(c.body)}</div>
+              </div>`).join('')}
+            <form onsubmit="submitComment(event, ${p.id})" style="display: flex; gap: 8px; margin-top: 6px;">
+              <input type="text" id="reply-input-${p.id}" placeholder="Write a reply or drop a GIF link..." required style="flex: 1; background: #080811; border: 1px solid var(--border-glass); color: #fff; padding: 8px 12px; border-radius: 8px; font-size: 0.85rem;" />
+              <button type="submit" class="btn btn-sm btn-fire">Reply</button>
+            </form>
+          </div>
+        </div>`).join('');
+    }
+
+    async function submitCommunityPost(e) {
+      e.preventDefault(); if (!authToken) { openAuthModal(); return; }
+      const payload = { category: document.getElementById('post-category').value, topic: document.getElementById('post-topic').value.trim(), body: document.getElementById('post-body').value.trim(), linkedTitleId: document.getElementById('post-linked-title').value || null };
+      const res = await fetch(`${API}?route=/community/posts`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` }, body: JSON.stringify(payload) });
+      if (res.ok) { document.getElementById('post-topic').value = ''; document.getElementById('post-body').value = ''; loadCommunityPosts(''); } else alert((await res.json()).error);
+    }
+    async function submitComment(e, postId) {
+      e.preventDefault(); if (!authToken) { openAuthModal(); return; }
+      const input = document.getElementById(`reply-input-${postId}`);
+      if ((await fetch(`${API}?route=${encodeURIComponent(`/community/posts/${postId}/comments`)}`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` }, body: JSON.stringify({ body: input.value.trim() }) })).ok) {
+        input.value = ''; loadCommunityPosts('');
+      }
+    }
+    async function likePost(postId) {
+      if (!authToken) { openAuthModal(); return; }
+      await fetch(`${API}?route=${encodeURIComponent(`/community/posts/${postId}/like`)}`, { method: 'POST', headers: { 'Authorization': `Bearer ${authToken}` } }); loadCommunityPosts('');
+    }
+
+    // --- User Shelf / Library ---
+    function setUserShelfViewMode(mode) {
+      userShelfViewMode = mode;
+      document.getElementById('btn-user-shelf-mode').classList.toggle('active', mode === 'shelf');
+      document.getElementById('btn-user-grid-mode').classList.toggle('active', mode === 'grid');
+      document.getElementById('user-shelf-container').classList.toggle('hidden', mode !== 'shelf');
+      document.getElementById('shelf-grid').classList.toggle('hidden', mode !== 'grid');
+      renderShelfItems();
+    }
+
+    async function openUserShelf(userId) {
+      ['catalog', 'community', 'members', 'library', 'admin', 'inbox'].forEach(v => {
+        const sec = document.getElementById(`view-${v}`); const tab = document.getElementById(`tab-${v}`);
+        if (sec) sec.classList.toggle('hidden', v !== 'library'); if (tab) tab.classList.toggle('active', v === 'library');
+      });
+
+      stopSwarmAnimation();
+
+      const res = await fetch(`${API}?route=${encodeURIComponent(`/users/${userId}/library`)}`, { headers: authToken ? { 'Authorization': `Bearer ${authToken}` } : {} });
+      const data = await res.json();
+      if (!res.ok) { alert(data.error || 'Could not load shelf'); return; }
+
+      currentShelfOwner = data.owner; currentShelfItems = data.library || [];
+      const isMine = currentUser && currentUser.id === currentShelfOwner.id;
+
+      document.getElementById('shelf-owner-title').innerText = isMine ? 'My Personal Spice Shelf' : `${currentShelfOwner.name}'s Public Shelf`;
+      document.getElementById('shelf-owner-sub').innerText = `Role: ${currentShelfOwner.role.toUpperCase()} • ${currentShelfItems.length} saved titles`;
+
+      const relContainer = document.getElementById('shelf-relations-container');
+      if (isMine || !currentUser) { relContainer.innerHTML = ''; } 
+      else {
+          let relHtml = ''; const rels = data.relations || {};
+          if (rels.isBlocked) relHtml += `<button class="btn btn-sm" onclick="unblockUser(${userId})">Unblock</button>`;
+          else {
+              if (rels.friendStatus === 'accepted') { relHtml += `<button class="btn btn-sm btn-fire" onclick="switchView('inbox'); openChat(${userId}, '${escapeHtml(currentShelfOwner.name)}')">Message</button><button class="btn btn-sm" onclick="removeFriend(${userId})">Remove Friend</button>`; } 
+              else if (rels.friendStatus === 'request_sent') { relHtml += `<button class="btn btn-sm" disabled>Request Sent</button>`; } 
+              else if (rels.friendStatus === 'request_received') { relHtml += `<button class="btn btn-sm btn-fire" onclick="acceptFriend(${userId})">Accept Request</button>`; } 
+              else { relHtml += `<button class="btn btn-sm btn-fire" onclick="sendFriendRequest(${userId})">Add Friend</button>`; }
+              relHtml += `<button class="btn btn-sm" onclick="blockUser(${userId})">Block</button>`;
+          }
+          relContainer.innerHTML = relHtml;
+      }
+      renderShelfItems();
+    }
+
+    function renderShelfItems() {
+      const filter = document.getElementById('shelf-filter').value;
+      const list = filter ? currentShelfItems.filter(i => i.status === filter) : currentShelfItems;
+      const isMine = currentUser && currentShelfOwner && currentUser.id === currentShelfOwner.id;
+      const grid = document.getElementById('shelf-grid');
+      const shelfContainer = document.getElementById('user-shelf-container');
+
+      if (list.length === 0) { 
+        grid.innerHTML = `<div class="glass-panel" style="grid-column: 1/-1; text-align: center; color: var(--text-secondary);">No items in this shelf view yet.</div>`; 
+        shelfContainer.innerHTML = `<div style="text-align: center; padding: 40px; color: var(--text-secondary);">No items on this shelf tier. Add some titles from the catalog!</div>`;
+        return; 
+      }
+
+      renderShelvesToContainer(shelfContainer, list, true);
+
+      grid.innerHTML = list.map(item => `
+        <div class="media-card" onclick="pullMediaIntoView(${item.titleId})">
+          <div class="card-cover-wrap"><img class="card-cover" src="${escapeHtml(item.coverUrl || FALLBACK_COVER)}" onerror="this.src='${FALLBACK_COVER}'" />
+            <span class="kind-pill">${escapeHtml(item.status.replace('_', ' '))}</span>
+            ${item.userSpice !== null ? `<div class="spice-badge-overlay">My Heat: ${item.userSpice} 🌶️</div>` : ''}
+          </div>
+          <div class="card-body">
+            <div class="card-title">${escapeHtml(item.title)}</div><div class="card-creator">${item.creator ? renderDiscoveryLink('creator', item.creator, item.kind, item.creator) : 'Unknown'}</div>
+            ${isMine ? `<div style="margin-top: auto; display: flex; gap: 6px;" onclick="event.stopPropagation()">
+                <select onchange="updateShelfStatus(${item.titleId}, this.value)" style="flex: 1; background: #080811; color: #fff; border: 1px solid var(--border-glass); border-radius: 6px; padding: 5px; font-size: 0.78rem;">
+                  <option value="completed" ${item.status === 'completed' ? 'selected' : ''}>✅ Completed</option><option value="in_progress" ${item.status === 'in_progress' ? 'selected' : ''}>🔥 In Progress</option><option value="planned" ${item.status === 'planned' ? 'selected' : ''}>📌 Planned</option><option value="dropped" ${item.status === 'dropped' ? 'selected' : ''}>🛑 Dropped</option>
+                </select>
+                <button class="btn btn-sm" style="color: var(--neon-crimson);" onclick="removeShelfItem(${item.titleId})">✕</button>
+              </div>` : ''}
+          </div>
+        </div>`).join('');
+    }
+
+    async function quickAddShelf(titleId) {
+      if (!authToken) { openAuthModal(); return; }
+      if ((await fetch(`${API}?route=/library/add`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` }, body: JSON.stringify({ titleId, status: 'completed' }) })).ok) alert('Added to your shelf!');
+    }
+    async function updateShelfStatus(titleId, status) {
+      await fetch(`${API}?route=/library/add`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` }, body: JSON.stringify({ titleId, status }) });
+      openUserShelf(currentUser.id);
+    }
+    async function removeShelfItem(titleId) {
+      await fetch(`${API}?route=${encodeURIComponent(`/library/${titleId}`)}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${authToken}` } });
+      openUserShelf(currentUser.id);
+    }
+    
+    // --- Modals, Forms, and Metadata Fetch ---
+    function updateAddModalFields() { document.getElementById('add-isbn-row').classList.toggle('hidden', document.getElementById('add-kind').value !== 'book'); }
+    function updateEditModalFields() { document.getElementById('edit-isbn-row').classList.toggle('hidden', document.getElementById('edit-kind').value !== 'book'); }
+
+    async function fetchMetadata() {
+      const kind = document.getElementById('add-kind').value, isbn = document.getElementById('add-isbn').value.trim(), q = document.getElementById('add-title').value.trim();
+      const statusEl = document.getElementById('add-cover-status'); statusEl.innerText = 'Scanning external databases...';
+      const res = await fetch(`${API}?route=/metadata/lookup&kind=${encodeURIComponent(kind)}&isbn=${encodeURIComponent(isbn)}&q=${encodeURIComponent(q)}`);
+      if (!res.ok) { statusEl.innerText = 'No match found.'; return; }
+      const t = (await res.json()).title;
+      if (t.title) document.getElementById('add-title').value = t.title; if (t.creator) document.getElementById('add-creator').value = t.creator;
+      if (t.isbn) document.getElementById('add-isbn').value = t.isbn; if (t.releaseYear) document.getElementById('add-year').value = t.releaseYear;
+      if (t.description) document.getElementById('add-desc').value = t.description;
+      if (t.coverUrl) { document.getElementById('add-cover').value = t.coverUrl; previewCoverArt(t.coverUrl, 'add-cover-preview'); statusEl.innerText = '✨ Auto-populated!'; } else statusEl.innerText = 'Loaded (no cover).';
+    }
+    async function fetchEditMetadata() {
+      const kind = document.getElementById('edit-kind').value, isbn = document.getElementById('edit-isbn').value.trim(), q = document.getElementById('edit-title').value.trim();
+      const statusEl = document.getElementById('edit-cover-status'); statusEl.innerText = 'Scanning...';
+      const res = await fetch(`${API}?route=/metadata/lookup&kind=${encodeURIComponent(kind)}&isbn=${encodeURIComponent(isbn)}&q=${encodeURIComponent(q)}`);
+      if (!res.ok) { statusEl.innerText = 'No match found.'; return; }
+      const t = (await res.json()).title;
+      if (t.title) document.getElementById('edit-title').value = t.title; if (t.creator) document.getElementById('edit-creator').value = t.creator;
+      if (t.isbn) document.getElementById('edit-isbn').value = t.isbn; if (t.releaseYear) document.getElementById('edit-year').value = t.releaseYear;
+      if (t.description) document.getElementById('edit-desc').value = t.description;
+      if (t.coverUrl) { document.getElementById('edit-cover').value = t.coverUrl; previewCoverArt(t.coverUrl, 'edit-cover-preview'); statusEl.innerText = '✨ Auto-populated!'; } else statusEl.innerText = 'Loaded (no cover).';
+    }
+    function previewCoverArt(url, imgId = 'add-cover-preview') { const img = document.getElementById(imgId); if (img) img.src = url && url.startsWith('http') ? url : FALLBACK_COVER; }
+
+    async function submitNewTitle(e) {
+      e.preventDefault(); if (!authToken) { openAuthModal(); return; }
+      const payload = {
+        kind: document.getElementById('add-kind').value, title: document.getElementById('add-title').value.trim(), creator: document.getElementById('add-creator').value.trim() || null,
+        isbn: document.getElementById('add-isbn').value.trim() || null, releaseYear: document.getElementById('add-year').value ? Number(document.getElementById('add-year').value) : null,
+        coverUrl: document.getElementById('add-cover').value.trim() || null, description: document.getElementById('add-desc').value.trim() || null
+      };
+      const res = await fetch(`${API}?route=/titles`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` }, body: JSON.stringify(payload) });
+      if (!res.ok) { alert((await res.json()).error || 'Could not save title.'); return; }
+      closeAddTitleModal(); if (document.querySelector('.nav-tab.active')?.id === 'tab-catalog') await loadCatalog(); openTitleDetail((await res.json()).title.id);
+    }
+    async function submitEditTitle(e) {
+      e.preventDefault();
+      const titleId = document.getElementById('edit-id').value;
+      const payload = {
+        kind: document.getElementById('edit-kind').value, title: document.getElementById('edit-title').value.trim(), creator: document.getElementById('edit-creator').value.trim() || null,
+        isbn: document.getElementById('edit-isbn').value.trim() || null, releaseYear: document.getElementById('edit-year').value ? Number(document.getElementById('edit-year').value) : null,
+        coverUrl: document.getElementById('edit-cover').value.trim() || null, description: document.getElementById('edit-desc').value.trim() || null,
+        catalogRating: document.getElementById('edit-catalog-rating').value, genres: document.getElementById('edit-genres').value,
+        tropes: document.getElementById('edit-tropes').value, tags: document.getElementById('edit-tags').value
+      };
+      const res = await fetch(`${API}?route=/titles/${titleId}`, { method: 'PUT', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` }, body: JSON.stringify(payload) });
+      if (res.ok) { closeEditTitleModal(); const activeTab = document.querySelector('.nav-tab.active'); if (activeTab && activeTab.id === 'tab-admin') loadAdminQueue(); else loadCatalog(); } else alert((await res.json()).error || 'Failed to update title.');
+    }
+    function openAddTitleModal() { if (!authToken) { openAuthModal(); return; } document.getElementById('modal-add').classList.remove('hidden'); updateAddModalFields(); }
+    function closeAddTitleModal() { document.getElementById('modal-add').classList.add('hidden'); }
+    function openEditTitleModal(titleId) {
+      const item = catalogCache.find(t => t.id === titleId); if (!item) return;
+      document.getElementById('edit-id').value = item.id; document.getElementById('edit-kind').value = item.kind;
+      document.getElementById('edit-title').value = item.title || ''; document.getElementById('edit-creator').value = item.creator || '';
+      document.getElementById('edit-isbn').value = item.isbn || ''; document.getElementById('edit-year').value = item.releaseYear || '';
+      document.getElementById('edit-cover').value = item.coverUrl || ''; document.getElementById('edit-desc').value = item.description || '';
+      document.getElementById('edit-catalog-rating').value = item.catalogRating ?? ''; document.getElementById('edit-genres').value = item.genres || '';
+      document.getElementById('edit-tropes').value = item.tropes || ''; document.getElementById('edit-tags').value = item.tags || '';
+      previewCoverArt(item.coverUrl, 'edit-cover-preview'); updateEditModalFields(); document.getElementById('modal-edit').classList.remove('hidden');
+      if (document.getElementById('modal-detail')) document.getElementById('modal-detail').classList.add('hidden');
+    }
+    function closeEditTitleModal() { document.getElementById('modal-edit').classList.add('hidden'); }
+
+    function openAuthModal() { isRegistering = false; document.getElementById('form-auth-main').classList.remove('hidden'); document.getElementById('form-auth-forgot').classList.add('hidden'); document.getElementById('form-auth-reset').classList.add('hidden'); syncAuthModal(); document.getElementById('modal-auth').classList.remove('hidden'); }
+    function openRegisterModal() { isRegistering = true; document.getElementById('form-auth-main').classList.remove('hidden'); document.getElementById('form-auth-forgot').classList.add('hidden'); document.getElementById('form-auth-reset').classList.add('hidden'); syncAuthModal(); document.getElementById('modal-auth').classList.remove('hidden'); }
+    function closeAuthModal() { document.getElementById('modal-auth').classList.add('hidden'); }
+    function toggleAuthMode() { isRegistering = !isRegistering; syncAuthModal(); }
+    function toggleForgotMode() {
+        const m = document.getElementById('form-auth-main'), f = document.getElementById('form-auth-forgot'), r = document.getElementById('form-auth-reset'), h = document.getElementById('auth-heading');
+        if (m.classList.contains('hidden')) { m.classList.remove('hidden'); f.classList.add('hidden'); r.classList.add('hidden'); h.innerText = isRegistering ? 'Join the Spice Community' : 'Sign In'; } 
+        else { m.classList.add('hidden'); f.classList.remove('hidden'); r.classList.add('hidden'); h.innerText = 'Reset Password'; }
+    }
+    function syncAuthModal() { document.getElementById('auth-heading').innerText = isRegistering ? 'Join the Spice Community' : 'Sign In'; document.getElementById('auth-name-wrap').classList.toggle('hidden', !isRegistering); document.getElementById('auth-username-wrap').classList.toggle('hidden', !isRegistering); document.getElementById('auth-btn').innerText = isRegistering ? 'Create Account' : 'Sign In'; document.getElementById('auth-switch').innerText = isRegistering ? 'Already a member? Sign In' : 'New here? Create account'; }
+    async function submitForgotPassword(e) {
+      e.preventDefault();
+      const email = document.getElementById('forgot-email').value.trim();
+      const res = await fetch(`${API}?route=/auth/forgot-password`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email }) });
+      const data = await res.json();
+      if (data.resetToken) { alert(`DEMO MODE: An email would be sent. Your reset token is: ${data.resetToken}\n\n(Copy this to paste in the next screen)`); document.getElementById('form-auth-forgot').classList.add('hidden'); document.getElementById('form-auth-reset').classList.remove('hidden'); } else alert(data.message);
+    }
+    async function submitResetPassword(e) {
+      e.preventDefault();
+      const payload = { token: document.getElementById('reset-token').value.trim(), password: document.getElementById('reset-password').value };
+      const res = await fetch(`${API}?route=/auth/reset-password`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+      if (res.ok) { alert('Password reset successfully! You can now log in.'); toggleForgotMode(); } else alert((await res.json()).error || 'Failed to reset password.');
+    }
+  </script>
+</body>
+</html>

@@ -49,6 +49,17 @@ function base64url_encode(string $value): string
     return rtrim(strtr(base64_encode($value), '+/', '-_'), '=');
 }
 
+function request_authorization_header(): string
+{
+    $authorization = $_SERVER['HTTP_AUTHORIZATION'] ?? '';
+    if (!$authorization && function_exists('getallheaders')) {
+        $headers = getallheaders();
+        $authorization = $headers['Authorization'] ?? $headers['authorization'] ?? '';
+    }
+
+    return is_string($authorization) ? $authorization : '';
+}
+
 function create_token(array $user, string $secret): string
 {
     $header = base64url_encode(json_encode(['typ' => 'JWT', 'alg' => 'HS256'], JSON_THROW_ON_ERROR));
@@ -65,11 +76,7 @@ function create_token(array $user, string $secret): string
 
 function authenticated_user(string $secret, PDO $pdo): array
 {
-    $authorization = $_SERVER['HTTP_AUTHORIZATION'] ?? '';
-    if (!$authorization && function_exists('getallheaders')) {
-        $headers = getallheaders();
-        $authorization = $headers['Authorization'] ?? $headers['authorization'] ?? '';
-    }
+    $authorization = request_authorization_header();
 
     if (!preg_match('/^Bearer\s+(\S+)$/i', $authorization, $matches)) {
         respond(401, ['error' => 'Sign in to continue.']);
@@ -151,6 +158,47 @@ function title_metadata_column_exists(PDO $pdo, string $column): bool
     );
     $check->execute(['titles', $column]);
     return (bool) $check->fetch();
+}
+
+function ensure_social_tables(PDO $pdo): void
+{
+    $pdo->exec(
+        'CREATE TABLE IF NOT EXISTS friendships (
+            requester_id BIGINT UNSIGNED NOT NULL,
+            addressee_id BIGINT UNSIGNED NOT NULL,
+            status ENUM(\'pending\', \'accepted\') NOT NULL DEFAULT \'pending\',
+            created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            PRIMARY KEY (requester_id, addressee_id),
+            KEY idx_friendships_addressee_status (addressee_id, status),
+            CONSTRAINT fk_friendships_requester FOREIGN KEY (requester_id) REFERENCES users(id) ON DELETE CASCADE,
+            CONSTRAINT fk_friendships_addressee FOREIGN KEY (addressee_id) REFERENCES users(id) ON DELETE CASCADE
+        ) ENGINE=InnoDB'
+    );
+    $pdo->exec(
+        'CREATE TABLE IF NOT EXISTS user_blocks (
+            blocker_id BIGINT UNSIGNED NOT NULL,
+            blocked_id BIGINT UNSIGNED NOT NULL,
+            created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (blocker_id, blocked_id),
+            CONSTRAINT fk_user_blocks_blocker FOREIGN KEY (blocker_id) REFERENCES users(id) ON DELETE CASCADE,
+            CONSTRAINT fk_user_blocks_blocked FOREIGN KEY (blocked_id) REFERENCES users(id) ON DELETE CASCADE
+        ) ENGINE=InnoDB'
+    );
+    $pdo->exec(
+        'CREATE TABLE IF NOT EXISTS messages (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            sender_id BIGINT UNSIGNED NOT NULL,
+            receiver_id BIGINT UNSIGNED NOT NULL,
+            content TEXT NOT NULL,
+            is_read TINYINT(1) NOT NULL DEFAULT 0,
+            created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            KEY idx_conversation (sender_id, receiver_id, created_at),
+            KEY idx_inbox (receiver_id, is_read, created_at),
+            CONSTRAINT fk_messages_sender FOREIGN KEY (sender_id) REFERENCES users(id) ON DELETE CASCADE,
+            CONSTRAINT fk_messages_receiver FOREIGN KEY (receiver_id) REFERENCES users(id) ON DELETE CASCADE
+        ) ENGINE=InnoDB'
+    );
 }
 
 function is_valid_kind(string $kind): bool
@@ -479,6 +527,119 @@ function fetch_external_media_metadata(string $kind, ?string $isbnInput, ?string
     return null;
 }
 
+function fetch_public_related_media(string $type, string $kind, string $query): array
+{
+    $results = [];
+    if ($kind === 'book' || $kind === 'all') {
+        $parameter = $type === 'creator' ? 'author' : 'subject';
+        $url = 'https://openlibrary.org/search.json?' . $parameter . '=' . urlencode($query)
+            . '&limit=20&fields=key,title,author_name,first_publish_year,isbn,cover_i';
+        $data = http_get_json($url);
+        foreach (($data['docs'] ?? []) as $doc) {
+            if (empty($doc['title'])) {
+                continue;
+            }
+            $isbn = null;
+            foreach (($doc['isbn'] ?? []) as $candidate) {
+                $candidate = (string) preg_replace('/[\s-]/u', '', (string) $candidate);
+                if (preg_match('/^(?:\d{9}[\dXx]|\d{13})$/', $candidate)) {
+                    $isbn = $candidate;
+                    break;
+                }
+            }
+            $coverId = $doc['cover_i'] ?? null;
+            $results[] = [
+                'title' => (string) $doc['title'],
+                'kind' => 'book',
+                'creator' => implode(', ', (array) ($doc['author_name'] ?? [])),
+                'isbn' => $isbn,
+                'barcode' => null,
+                'releaseYear' => isset($doc['first_publish_year']) ? (int) $doc['first_publish_year'] : null,
+                'coverUrl' => $coverId ? "https://covers.openlibrary.org/b/id/{$coverId}-L.jpg" : null,
+                'description' => null,
+                'source' => 'Open Library',
+                'sourceUrl' => isset($doc['key']) && str_starts_with($doc['key'], '/')
+                    ? 'https://openlibrary.org' . $doc['key']
+                    : null,
+            ];
+        }
+    }
+
+    $itunesEntities = [
+        'movie' => ['movie', 'trackName'],
+        'tv' => ['tvEpisode', 'trackName'],
+        'podcast' => ['podcast', 'collectionName'],
+        'game' => ['software', 'trackName'],
+    ];
+    $kinds = $kind === 'all' ? array_keys($itunesEntities) : [$kind];
+    foreach ($kinds as $itemKind) {
+        if (!isset($itunesEntities[$itemKind])) {
+            continue;
+        }
+        [$entity, $titleField] = $itunesEntities[$itemKind];
+        $url = 'https://itunes.apple.com/search?term=' . urlencode($query)
+            . '&entity=' . urlencode($entity) . '&limit=20';
+        $data = http_get_json($url);
+        foreach (($data['results'] ?? []) as $item) {
+            $title = $item[$titleField] ?? null;
+            if (!is_string($title) || trim($title) === '') {
+                continue;
+            }
+            $coverUrl = $item['artworkUrl100'] ?? $item['artworkUrl600'] ?? null;
+            if (is_string($coverUrl)) {
+                $coverUrl = preg_replace('/\d+x\d+bb(?=\.)/', '600x600bb', $coverUrl);
+            }
+            $results[] = [
+                'title' => $title,
+                'kind' => $itemKind,
+                'creator' => $item['artistName'] ?? null,
+                'isbn' => null,
+                'barcode' => null,
+                'releaseYear' => !empty($item['releaseDate']) ? (int) substr($item['releaseDate'], 0, 4) : null,
+                'coverUrl' => $coverUrl,
+                'description' => clean_description($item['longDescription'] ?? $item['description'] ?? null),
+                'source' => 'Apple iTunes',
+                'sourceUrl' => $item['trackViewUrl'] ?? $item['collectionViewUrl'] ?? null,
+            ];
+        }
+    }
+
+    if ($kind === 'other') {
+        $wikiUrl = 'https://en.wikipedia.org/w/api.php?action=query&generator=search&gsrsearch='
+            . urlencode($query)
+            . '&gsrlimit=10&prop=pageimages%7Cextracts&piprop=thumbnail&pithumbsize=300&exintro=1&explaintext=1&format=json';
+        $wikiData = http_get_json($wikiUrl);
+        foreach (($wikiData['query']['pages'] ?? []) as $page) {
+            if (empty($page['title'])) {
+                continue;
+            }
+            $extract = (string) ($page['extract'] ?? '');
+            $year = preg_match('/\b(19\d{2}|20\d{2})\b/', $extract, $yearMatch)
+                ? (int) $yearMatch[0]
+                : null;
+            $results[] = [
+                'title' => (string) $page['title'],
+                'kind' => 'other',
+                'creator' => null,
+                'isbn' => null,
+                'barcode' => null,
+                'releaseYear' => $year,
+                'coverUrl' => $page['thumbnail']['source'] ?? null,
+                'description' => clean_description($extract),
+                'source' => 'Wikipedia',
+                'sourceUrl' => 'https://en.wikipedia.org/?curid=' . (int) ($page['pageid'] ?? 0),
+            ];
+        }
+    }
+
+    $unique = [];
+    foreach ($results as $item) {
+        $key = strtolower(trim($item['kind'] . '|' . $item['title']));
+        $unique[$key] ??= $item;
+    }
+    return array_values($unique);
+}
+
 try {
     $configFile = __DIR__ . '/config.php';
     if (!file_exists($configFile)) {
@@ -548,6 +709,26 @@ try {
         respond(200, ['status' => 'ok']);
     }
 
+    // --- Visitor Counter Route ---
+    if ($route === '/stats/visitors' && in_array($method, ['GET', 'POST'], true)) {
+        if ($method === 'POST') {
+            $pdo->exec(
+                "INSERT INTO app_settings (`key`, `value`) VALUES ('visitor_count', '1')
+                 ON DUPLICATE KEY UPDATE `value` = CAST(CAST(`value` AS UNSIGNED) + 1 AS CHAR)"
+            );
+        } else {
+            $pdo->exec(
+                "INSERT IGNORE INTO app_settings (`key`, `value`) VALUES ('visitor_count', '0')"
+            );
+        }
+
+        $stmt = $pdo->prepare("SELECT `value` FROM app_settings WHERE `key` = 'visitor_count' LIMIT 1");
+        $stmt->execute();
+        $count = (int) ($stmt->fetchColumn() ?: 0);
+
+        respond(200, ['visitors' => $count]);
+    }
+
     // --- App Settings Routes ---
     if ($method === 'GET' && $route === '/settings') {
         $stmt = $pdo->query('SELECT `key`, `value` FROM app_settings');
@@ -609,6 +790,78 @@ try {
         }
 
         respond(404, ['error' => 'No title metadata found. Try refining the title or entering details manually.']);
+    }
+
+    if ($method === 'GET' && $route === '/discovery/search') {
+        $type = query_string('type');
+        $kind = query_string('kind') ?: 'all';
+        $query = truncate_text(query_string('q'), 120);
+        if (!in_array($type, ['creator', 'genre'], true) || $query === '') {
+            respond(400, ['error' => 'Choose a creator or genre and provide a search term.']);
+        }
+        if ($kind !== 'all' && !is_valid_kind($kind)) {
+            respond(400, ['error' => 'Choose a valid media type.']);
+        }
+
+        ensure_title_metadata_columns($pdo);
+        $conditions = [];
+        $values = [];
+        if ($type === 'creator') {
+            $conditions[] = 't.creator LIKE ?';
+            $values[] = '%' . $query . '%';
+        } else {
+            $conditions[] = 'FIND_IN_SET(LOWER(?), REPLACE(LOWER(COALESCE(t.genres, \'\')), \' \', \'\')) > 0';
+            $values[] = str_replace(' ', '', strtolower(trim($query)));
+        }
+        if ($kind !== 'all') {
+            $conditions[] = 't.kind = ?';
+            $values[] = $kind;
+        }
+
+        $catalogStatement = $pdo->prepare(
+            'SELECT t.id, t.title, t.kind, t.creator, t.isbn, t.barcode,
+                    t.release_year AS releaseYear, t.cover_url AS coverUrl, t.description,
+                    t.catalog_rating AS catalogRating, t.genres, t.tropes, t.tags
+             FROM titles t WHERE ' . implode(' AND ', $conditions) . '
+             ORDER BY t.title ASC LIMIT 100'
+        );
+        $catalogStatement->execute($values);
+        $catalog = $catalogStatement->fetchAll();
+        foreach ($catalog as &$item) {
+            $item['id'] = (int) $item['id'];
+            $item['releaseYear'] = $item['releaseYear'] !== null ? (int) $item['releaseYear'] : null;
+            $item['catalogRating'] = $item['catalogRating'] !== null ? (float) $item['catalogRating'] : null;
+            $item['source'] = 'Catalog';
+            $item['inCatalog'] = true;
+        }
+        unset($item);
+
+        $publicResults = fetch_public_related_media($type, $kind, $query);
+        $catalogByIsbn = [];
+        $catalogByTitle = [];
+        foreach ($catalog as $item) {
+            if (!empty($item['isbn'])) {
+                $catalogByIsbn[strtolower((string) $item['isbn'])] = $item;
+            }
+            $catalogByTitle[strtolower(trim((string) $item['kind'] . '|' . $item['title']))] = $item;
+        }
+        foreach ($publicResults as &$item) {
+            $isbnKey = strtolower((string) ($item['isbn'] ?? ''));
+            $titleKey = strtolower(trim($item['kind'] . '|' . $item['title']));
+            $existing = ($isbnKey !== '' ? ($catalogByIsbn[$isbnKey] ?? null) : null)
+                ?? ($catalogByTitle[$titleKey] ?? null);
+            $item['inCatalog'] = $existing !== null;
+            $item['catalogId'] = $existing['id'] ?? null;
+        }
+        unset($item);
+
+        respond(200, [
+            'query' => $query,
+            'type' => $type,
+            'kind' => $kind,
+            'catalog' => $catalog,
+            'publicResults' => $publicResults,
+        ]);
     }
 
     // --- ADMIN BULK IMPORT & DYNAMIC SCHEMA REVIEW ROUTES ---
@@ -1481,7 +1734,41 @@ try {
         }
         unset($entry);
 
-        respond(200, ['owner' => $owner, 'library' => $library, 'relations' => ['isBlocked' => false, 'friendStatus' => null]]);
+        $relations = ['isBlocked' => false, 'friendStatus' => null];
+        $authorization = request_authorization_header();
+        if ($authorization !== '') {
+            $viewer = authenticated_user($config['jwt_secret'], $pdo);
+            if ((int) $viewer['id'] !== $targetUserId) {
+                ensure_social_tables($pdo);
+                $blocked = $pdo->prepare(
+                    'SELECT 1 FROM user_blocks WHERE blocker_id = ? AND blocked_id = ?
+                     UNION SELECT 1 FROM user_blocks WHERE blocker_id = ? AND blocked_id = ? LIMIT 1'
+                );
+                $blocked->execute([$viewer['id'], $targetUserId, $targetUserId, $viewer['id']]);
+                $relations['isBlocked'] = (bool) $blocked->fetch();
+
+                if (!$relations['isBlocked']) {
+                    $friendship = $pdo->prepare(
+                        'SELECT requester_id, addressee_id, status FROM friendships
+                         WHERE (requester_id = ? AND addressee_id = ?) OR (requester_id = ? AND addressee_id = ?)
+                         LIMIT 1'
+                    );
+                    $friendship->execute([$viewer['id'], $targetUserId, $targetUserId, $viewer['id']]);
+                    $relation = $friendship->fetch();
+                    if ($relation) {
+                        if ($relation['status'] === 'accepted') {
+                            $relations['friendStatus'] = 'accepted';
+                        } else {
+                            $relations['friendStatus'] = (int) $relation['requester_id'] === (int) $viewer['id']
+                                ? 'request_sent'
+                                : 'request_received';
+                        }
+                    }
+                }
+            }
+        }
+
+        respond(200, ['owner' => $owner, 'library' => $library, 'relations' => $relations]);
     }
 
     if ($method === 'POST' && $route === '/library/add') {
@@ -1700,20 +1987,266 @@ try {
         respond(200, ['message' => 'Liked!']);
     }
 
-    // --- Messages & Friends / Blocks Stub Handlers ---
+    // --- Messages & Friends / Blocks ---
     if ($method === 'GET' && $route === '/messages/inbox') {
         $user = authenticated_user($config['jwt_secret'], $pdo);
-        respond(200, ['inbox' => []]);
+        ensure_social_tables($pdo);
+
+        // Latest message per conversation partner
+        $stmt = $pdo->prepare(
+            'SELECT m.*, other.name AS partnerName, other.avatar_url AS partnerAvatar
+             FROM messages m
+             JOIN users other ON other.id = CASE
+                 WHEN m.sender_id = ? THEN m.receiver_id ELSE m.sender_id
+             END
+             JOIN (
+                 SELECT
+                   CASE WHEN sender_id = ? THEN receiver_id ELSE sender_id END AS partner,
+                   MAX(id) AS last_id
+                 FROM messages
+                 WHERE sender_id = ? OR receiver_id = ?
+                 GROUP BY partner
+             ) latest ON latest.last_id = m.id
+             ORDER BY m.created_at DESC
+             LIMIT 50'
+        );
+        $stmt->execute([$user['id'], $user['id'], $user['id'], $user['id']]);
+        $rows = $stmt->fetchAll();
+
+        $inbox = array_map(static function ($r) use ($user) {
+            return [
+                'partnerId'     => (int) ($r['sender_id'] === (int) $user['id'] ? $r['receiver_id'] : $r['sender_id']),
+                'partnerName'   => $r['partnerName'],
+                'partnerAvatar' => $r['partnerAvatar'],
+                'lastMessage'   => truncate_text($r['content'], 200),
+                'lastMessageAt' => $r['created_at'],
+                'senderId'      => (int) $r['sender_id'],
+                'isRead'        => (bool) $r['is_read'],
+            ];
+        }, $rows);
+
+        respond(200, ['inbox' => $inbox]);
+    }
+
+    if ($method === 'GET' && preg_match('#^/messages/([0-9]+)$#', $route, $matches)) {
+        $user = authenticated_user($config['jwt_secret'], $pdo);
+        ensure_social_tables($pdo);
+        $partnerId = (int) $matches[1];
+
+        $check = $pdo->prepare('SELECT id FROM users WHERE id = ?');
+        $check->execute([$partnerId]);
+        if (!$check->fetch()) {
+            respond(404, ['error' => 'User not found.']);
+        }
+
+        // Mark partner's messages to me as read
+        $pdo->prepare('UPDATE messages SET is_read = 1 WHERE sender_id = ? AND receiver_id = ? AND is_read = 0')
+            ->execute([$partnerId, $user['id']]);
+
+        $stmt = $pdo->prepare(
+            'SELECT id, sender_id AS senderId, receiver_id AS receiverId, content, is_read AS isRead, created_at AS createdAt
+             FROM messages
+             WHERE (sender_id = ? AND receiver_id = ?) OR (sender_id = ? AND receiver_id = ?)
+             ORDER BY created_at ASC
+             LIMIT 500'
+        );
+        $stmt->execute([$user['id'], $partnerId, $partnerId, $user['id']]);
+        $messages = $stmt->fetchAll();
+        foreach ($messages as &$m) {
+            $m['id'] = (int) $m['id'];
+            $m['senderId'] = (int) $m['senderId'];
+            $m['receiverId'] = (int) $m['receiverId'];
+            $m['isRead'] = (bool) $m['isRead'];
+        }
+        unset($m);
+
+        respond(200, ['messages' => $messages]);
+    }
+
+    if ($method === 'POST' && preg_match('#^/messages/([0-9]+)$#', $route, $matches)) {
+        $user = authenticated_user($config['jwt_secret'], $pdo);
+        ensure_social_tables($pdo);
+        $partnerId = (int) $matches[1];
+
+        if ($partnerId === (int) $user['id']) {
+            respond(400, ['error' => 'You cannot message yourself.']);
+        }
+
+        $content = trim(body_string($body, 'content'));
+        if ($content === '' || text_length($content) > 4000) {
+            respond(400, ['error' => 'Message must be between 1 and 4,000 characters.']);
+        }
+
+        $check = $pdo->prepare('SELECT id FROM users WHERE id = ?');
+        $check->execute([$partnerId]);
+        if (!$check->fetch()) {
+            respond(404, ['error' => 'User not found.']);
+        }
+
+        $blocked = $pdo->prepare(
+            'SELECT 1 FROM user_blocks WHERE blocker_id = ? AND blocked_id = ?
+             UNION SELECT 1 FROM user_blocks WHERE blocker_id = ? AND blocked_id = ? LIMIT 1'
+        );
+        $blocked->execute([$user['id'], $partnerId, $partnerId, $user['id']]);
+        if ($blocked->fetch()) {
+            respond(409, ['error' => 'Messaging unavailable while either user has blocked the other.']);
+        }
+
+        $stmt = $pdo->prepare('INSERT INTO messages (sender_id, receiver_id, content) VALUES (?, ?, ?)');
+        $stmt->execute([$user['id'], $partnerId, $content]);
+
+        respond(201, ['message' => 'Message sent.', 'id' => (int) $pdo->lastInsertId()]);
+    }
+
+    if ($method === 'POST' && $route === '/friends/request') {
+        $user = authenticated_user($config['jwt_secret'], $pdo);
+        ensure_social_tables($pdo);
+        $friendId = filter_var($body['friendId'] ?? null, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
+        if ($friendId === false) {
+            respond(400, ['error' => 'A valid friendId is required.']);
+        }
+        if ((int) $friendId === (int) $user['id']) {
+            respond(400, ['error' => 'You cannot send a friend request to yourself.']);
+        }
+
+        $target = $pdo->prepare('SELECT id FROM users WHERE id = ?');
+        $target->execute([$friendId]);
+        if (!$target->fetch()) {
+            respond(404, ['error' => 'User not found.']);
+        }
+
+        $blocked = $pdo->prepare(
+            'SELECT 1 FROM user_blocks WHERE blocker_id = ? AND blocked_id = ?
+             UNION SELECT 1 FROM user_blocks WHERE blocker_id = ? AND blocked_id = ? LIMIT 1'
+        );
+        $blocked->execute([$user['id'], $friendId, $friendId, $user['id']]);
+        if ($blocked->fetch()) {
+            respond(409, ['error' => 'A friend request cannot be sent while either user has blocked the other.']);
+        }
+
+        $existing = $pdo->prepare(
+            'SELECT requester_id, addressee_id, status FROM friendships
+             WHERE (requester_id = ? AND addressee_id = ?) OR (requester_id = ? AND addressee_id = ?)
+             LIMIT 1'
+        );
+        $existing->execute([$user['id'], $friendId, $friendId, $user['id']]);
+        $friendship = $existing->fetch();
+        if ($friendship) {
+            if ($friendship['status'] === 'accepted') {
+                respond(409, ['error' => 'You are already friends.']);
+            }
+            if ((int) $friendship['requester_id'] === (int) $friendId) {
+                respond(409, ['error' => 'This user has already sent you a request. Accept it from your friend list.']);
+            }
+            respond(409, ['error' => 'A friend request has already been sent.']);
+        }
+
+        $insert = $pdo->prepare(
+            'INSERT INTO friendships (requester_id, addressee_id, status) VALUES (?, ?, \'pending\')'
+        );
+        $insert->execute([$user['id'], $friendId]);
+        respond(201, ['message' => 'Friend request sent.']);
+    }
+
+    if ($method === 'PUT' && preg_match('#^/friends/([0-9]+)/accept$#', $route, $matches)) {
+        $user = authenticated_user($config['jwt_secret'], $pdo);
+        ensure_social_tables($pdo);
+        $requesterId = (int) $matches[1];
+        $accept = $pdo->prepare(
+            'UPDATE friendships SET status = \'accepted\'
+             WHERE requester_id = ? AND addressee_id = ? AND status = \'pending\''
+        );
+        $accept->execute([$requesterId, $user['id']]);
+        if ($accept->rowCount() === 0) {
+            respond(404, ['error' => 'Pending friend request not found.']);
+        }
+        respond(200, ['message' => 'Friend request accepted.']);
+    }
+
+    if ($method === 'DELETE' && preg_match('#^/friends/([0-9]+)$#', $route, $matches)) {
+        $user = authenticated_user($config['jwt_secret'], $pdo);
+        ensure_social_tables($pdo);
+        $friendId = (int) $matches[1];
+        $remove = $pdo->prepare(
+            'DELETE FROM friendships
+             WHERE (requester_id = ? AND addressee_id = ?) OR (requester_id = ? AND addressee_id = ?)'
+        );
+        $remove->execute([$user['id'], $friendId, $friendId, $user['id']]);
+        respond(200, ['message' => 'Friend relationship removed.']);
     }
 
     if ($method === 'GET' && $route === '/friends') {
         $user = authenticated_user($config['jwt_secret'], $pdo);
-        respond(200, ['friends' => []]);
+        ensure_social_tables($pdo);
+        $statement = $pdo->prepare(
+            'SELECT
+                CASE WHEN f.requester_id = ? THEN f.addressee_id ELSE f.requester_id END AS id,
+                other.name,
+                other.username,
+                other.avatar_url AS avatarUrl,
+                f.requester_id AS requesterId,
+                f.status,
+                f.created_at AS createdAt
+             FROM friendships f
+             JOIN users other ON other.id = CASE WHEN f.requester_id = ? THEN f.addressee_id ELSE f.requester_id END
+             WHERE (f.requester_id = ? OR f.addressee_id = ?)
+             ORDER BY f.status = \'pending\' DESC, f.created_at DESC'
+        );
+        $statement->execute([$user['id'], $user['id'], $user['id'], $user['id']]);
+        $friends = $statement->fetchAll();
+        foreach ($friends as &$friend) {
+            $friend['id'] = (int) $friend['id'];
+            $friend['requesterId'] = (int) $friend['requesterId'];
+        }
+        unset($friend);
+        respond(200, ['friends' => $friends]);
+    }
+
+    if ($method === 'POST' && $route === '/blocks') {
+        $user = authenticated_user($config['jwt_secret'], $pdo);
+        ensure_social_tables($pdo);
+        $blockedId = filter_var($body['blockId'] ?? null, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
+        if ($blockedId === false) {
+            respond(400, ['error' => 'A valid blockId is required.']);
+        }
+        if ((int) $blockedId === (int) $user['id']) {
+            respond(400, ['error' => 'You cannot block yourself.']);
+        }
+        $target = $pdo->prepare('SELECT id FROM users WHERE id = ?');
+        $target->execute([$blockedId]);
+        if (!$target->fetch()) {
+            respond(404, ['error' => 'User not found.']);
+        }
+        $pdo->prepare('INSERT IGNORE INTO user_blocks (blocker_id, blocked_id) VALUES (?, ?)')->execute([$user['id'], $blockedId]);
+        $pdo->prepare(
+            'DELETE FROM friendships
+             WHERE (requester_id = ? AND addressee_id = ?) OR (requester_id = ? AND addressee_id = ?)'
+        )->execute([$user['id'], $blockedId, $blockedId, $user['id']]);
+        respond(200, ['message' => 'User blocked.']);
+    }
+
+    if ($method === 'DELETE' && preg_match('#^/blocks/([0-9]+)$#', $route, $matches)) {
+        $user = authenticated_user($config['jwt_secret'], $pdo);
+        ensure_social_tables($pdo);
+        $pdo->prepare('DELETE FROM user_blocks WHERE blocker_id = ? AND blocked_id = ?')->execute([$user['id'], (int) $matches[1]]);
+        respond(200, ['message' => 'User unblocked.']);
     }
 
     if ($method === 'GET' && $route === '/blocks') {
         $user = authenticated_user($config['jwt_secret'], $pdo);
-        respond(200, ['blocks' => []]);
+        ensure_social_tables($pdo);
+        $statement = $pdo->prepare(
+            'SELECT u.id, u.name, u.username, u.avatar_url AS avatarUrl
+             FROM user_blocks b JOIN users u ON u.id = b.blocked_id
+             WHERE b.blocker_id = ? ORDER BY b.created_at DESC'
+        );
+        $statement->execute([$user['id'], $user['id']]);
+        $blocks = $statement->fetchAll();
+        foreach ($blocks as &$block) {
+            $block['id'] = (int) $block['id'];
+        }
+        unset($block);
+        respond(200, ['blocks' => $blocks]);
     }
 
     respond(404, ['error' => 'Not found.']);
