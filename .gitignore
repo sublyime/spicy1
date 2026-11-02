@@ -1,5 +1,4 @@
 node_modules/
 dist/
 .env
-api/config.php
 npm-debug.log*
