@@ -842,19 +842,15 @@
       width: 100%;
       height: 100%;
       position: relative;
-      transform-style: preserve-3d;
-      transition: transform 0.85s cubic-bezier(0.175, 0.885, 0.32, 1.275);
       border-radius: 14px;
       box-shadow:
         0 50px 100px rgba(0,0,0,0.9),
         0 0 50px rgba(255, 61, 110, 0.35),
         0 0 120px rgba(184, 102, 255, 0.15);
     }
-    .held-book-card.is-flipped { transform: rotateY(180deg); }
     .held-card-face {
       position: absolute;
       inset: 0;
-      backface-visibility: hidden;
       border-radius: 14px;
       overflow: hidden;
       border: 2px solid rgba(255, 255, 255, 0.12);
@@ -862,18 +858,6 @@
       display: flex;
       flex-direction: column;
       box-shadow: inset 0 1px 0 rgba(255,255,255,0.15);
-    }
-    .held-card-front { z-index: 2; transform: rotateY(0deg); }
-    .held-card-back {
-      transform: rotateY(180deg);
-      background:
-        radial-gradient(ellipse 80% 60% at 50% 0%, rgba(255, 61, 110, 0.14) 0%, transparent 70%),
-        linear-gradient(145deg, #14142a 0%, #0a0914 100%);
-      padding: 24px;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      border: 2px solid var(--border-neon);
     }
     .held-card-front { background: #08050e; }
     .held-card-front img { width: 100%; height: 100%; object-fit: contain; display: block; }
@@ -1226,6 +1210,66 @@
     .modal-box::-webkit-scrollbar { width: 6px; }
     .modal-box::-webkit-scrollbar-track { background: transparent; }
     .modal-box::-webkit-scrollbar-thumb { background: var(--neon-crimson); border-radius: 10px; }
+    .title-detail-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 230px;
+      gap: 20px;
+      align-items: start;
+    }
+    .title-detail-main { min-width: 0; }
+    .title-detail-overview {
+      display: grid;
+      grid-template-columns: 180px minmax(0, 1fr);
+      gap: 22px;
+      margin-bottom: 24px;
+    }
+    .related-title-rail {
+      position: sticky;
+      top: 0;
+      max-height: 72vh;
+      overflow-y: auto;
+      padding: 14px;
+      border: 1px solid var(--border-glass);
+      border-radius: 12px;
+      background: rgba(6,5,12,0.65);
+      scrollbar-width: thin;
+      scrollbar-color: var(--neon-crimson) transparent;
+    }
+    .related-title-card {
+      width: 100%;
+      display: grid;
+      grid-template-columns: 56px minmax(0, 1fr);
+      gap: 10px;
+      padding: 9px;
+      margin-top: 10px;
+      text-align: left;
+      color: var(--text-primary);
+      background: rgba(255,255,255,0.035);
+      border: 1px solid var(--border-glass);
+      border-radius: 9px;
+      cursor: pointer;
+    }
+    .related-title-card:hover { border-color: var(--neon-crimson); background: rgba(255,42,84,0.08); }
+    .related-title-card img { width: 56px; height: 82px; object-fit: contain; background: #080811; border-radius: 5px; }
+    .related-title-card strong { display: block; font-size: .82rem; line-height: 1.35; }
+    .related-title-card small { display: block; margin-top: 5px; color: var(--text-secondary); font-size: .7rem; line-height: 1.35; }
+    .detail-status-panel {
+      margin: 12px 0;
+      padding: 12px;
+      border: 1px solid var(--border-glass);
+      border-radius: 10px;
+      background: rgba(255,255,255,0.035);
+    }
+    .catalog-more-control {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      padding: 18px 12px 28px;
+      color: var(--text-secondary);
+      font-size: 0.85rem;
+    }
 
     .form-row { margin-bottom: 16px; }
     .form-row label {
@@ -1354,6 +1398,19 @@
       align-items: center;
       gap: 8px;
     }
+    .footer-links { display: flex; align-items: center; gap: 14px; }
+    .footer-link {
+      padding: 0;
+      border: 0;
+      background: none;
+      color: var(--text-2);
+      font: inherit;
+      font-size: 0.82rem;
+      text-decoration: underline;
+      text-underline-offset: 3px;
+      cursor: pointer;
+    }
+    .footer-link:hover { color: var(--text-1); }
     .visitor-counter-pill {
       display: inline-flex;
       align-items: center;
@@ -1428,6 +1485,7 @@
       .nav-tab { padding: 7px 12px; font-size: 0.78rem; }
       .site-footer { padding: 18px 16px; }
       .footer-inner { flex-direction: column; text-align: center; justify-content: center; }
+      .footer-links { flex-wrap: wrap; justify-content: center; }
     }
 
     @media (max-width: 1024px) {
@@ -1632,11 +1690,18 @@
         padding: 18px 14px calc(18px + env(safe-area-inset-bottom));
         border-radius: 18px 18px 0 0;
       }
-      #detail-content > div:first-child {
+      .title-detail-layout {
+        grid-template-columns: minmax(0, 1fr) !important;
+      }
+      .related-title-rail {
+        position: static !important;
+        max-height: 260px !important;
+      }
+      .title-detail-overview {
         grid-template-columns: minmax(88px, 30%) minmax(0, 1fr) !important;
         gap: 14px !important;
       }
-      #detail-content > div:first-child > img {
+      .title-detail-overview > img {
         width: 100% !important;
         height: auto !important;
         aspect-ratio: 9 / 13;
@@ -1697,14 +1762,20 @@
         width: 100%;
       }
       #view-admin #queue-enrichment-log { overflow-x: auto; }
-      #detail-content > div:first-child { grid-template-columns: 1fr !important; }
-      #detail-content > div:first-child > img {
+      .title-detail-overview { grid-template-columns: minmax(0, 1fr) !important; }
+      .title-detail-overview > img {
         width: min(180px, 60%) !important;
         justify-self: center;
       }
     }
   </style>
 </head>
+<script async src="https://www.googletagmanager.com/gtm.js?id=GTM-MCX9LCHG"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+</script>
 <body>
 
   <header>
@@ -1745,7 +1816,7 @@
         <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
           <div class="view-toggle-wrap">
             <button class="view-toggle-btn active" id="btn-mode-shelf" onclick="setCatalogViewMode('shelf')">📚 Bookshelf</button>
-            <button class="view-toggle-btn" id="btn-mode-grid" onclick="setCatalogViewMode('grid')">▦ Grid</button>
+            <button class="view-toggle-btn" id="btn-mode-grid" onclick="setCatalogViewMode('grid')" title="Show every title in a continuous page you can scroll through">▦ Show All</button>
           </div>
           <button class="btn btn-fire" onclick="switchView('community')">Join the Lounge 💬</button>
         </div>
@@ -1776,6 +1847,7 @@
 
       <div id="catalog-shelf-container" class="bookshelf-unit"></div>
       <div id="catalog-grid" class="media-grid hidden"></div>
+      <div id="catalog-more-control" class="catalog-more-control" aria-live="polite"></div>
     </section>
 
     <!-- VIEW 2: COMMUNITY LOUNGE -->
@@ -1867,6 +1939,8 @@
           <div style="display: flex; flex-direction: column; gap: 8px;">
             <button class="btn" id="btn-admin-queue" style="justify-content: flex-start;" onclick="showAdminSection('queue')">🛡️ Missing Info Queue</button>
             <button class="btn active" id="btn-admin-import" style="justify-content: flex-start;" onclick="showAdminSection('import')">📦 Bulk Media Importer</button>
+            <button class="btn" id="btn-admin-users" style="justify-content: flex-start;" onclick="showAdminSection('users')">👥 User Management</button>
+            <button class="btn" id="btn-admin-moderation" style="justify-content: flex-start;" onclick="showAdminSection('moderation')">🧹 Community Moderation</button>
           </div>
         </aside>
         <div>
@@ -1967,6 +2041,34 @@
             </div>
             <div id="admin-grid" class="media-grid"></div>
           </div>
+
+          <div id="admin-sec-users" class="hidden">
+            <div class="glass-panel" style="margin-bottom: 16px;">
+              <h2>👥 User Management</h2>
+              <p style="color:var(--text-secondary); margin:6px 0 16px;">Create member accounts, assign roles, send secure password setup/reset emails, and deactivate accounts without deleting their history.</p>
+              <form onsubmit="createAdminUser(event)" style="display:flex; gap:10px; align-items:flex-end; flex-wrap:wrap;">
+                <div class="form-row" style="margin:0; flex:1 1 180px;"><label for="admin-new-user-name">Name</label><input id="admin-new-user-name" required minlength="2" maxlength="80" /></div>
+                <div class="form-row" style="margin:0; flex:1 1 220px;"><label for="admin-new-user-email">Email</label><input type="email" id="admin-new-user-email" required maxlength="254" /></div>
+                <button type="submit" class="btn btn-fire">Create &amp; Send Setup Link</button>
+              </form>
+              <div id="admin-user-create-status" role="status" style="margin-top:10px; color:var(--text-secondary);"></div>
+            </div>
+            <div class="glass-panel">
+              <form onsubmit="searchAdminUsers(event)" style="display:flex; gap:10px; margin-bottom:14px;">
+                <input type="search" id="admin-user-search" placeholder="Search name, username, or email" style="flex:1;" />
+                <button type="submit" class="btn">Search</button>
+              </form>
+              <div id="admin-users-list" aria-live="polite"></div>
+            </div>
+          </div>
+
+          <div id="admin-sec-moderation" class="hidden">
+            <div class="glass-panel" style="margin-bottom:16px;">
+              <h2>🧹 Community Moderation</h2>
+              <p style="color:var(--text-secondary); margin:6px 0 16px;">Lock discussions to stop new replies, or remove forum posts and comments. Book reviews are not included.</p>
+              <div id="admin-community-list" aria-live="polite"></div>
+            </div>
+          </div>
         </div>
       </div>
     </section>
@@ -1979,13 +2081,48 @@
       <div class="footer-copy">
         <span>🌶️ <strong>IS IT TOO SPICY?</strong> — Media Heat Index & Community Hub</span>
       </div>
-      <div class="visitor-counter-pill" title="Total community visits">
-        <span class="visitor-pulse-dot"></span>
-        <span>🔥 Total Spice Seekers:</span>
-        <span id="visitor-count-display" class="visitor-count-num">...</span>
+      <div class="footer-links">
+        <button type="button" class="footer-link" onclick="openPrivacyNotice()">Privacy &amp; Analytics</button>
+        <div class="visitor-counter-pill" title="Total community visits">
+          <span class="visitor-pulse-dot"></span>
+          <span>🔥 Total Spice Seekers:</span>
+          <span id="visitor-count-display" class="visitor-count-num">...</span>
+        </div>
       </div>
     </div>
   </footer>
+
+  <div id="modal-privacy" class="modal-backdrop hidden" onclick="handlePrivacyBackdropClick(event)">
+    <section class="modal-box" role="dialog" aria-modal="true" aria-labelledby="privacy-title" tabindex="-1">
+      <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:12px; margin-bottom:16px;">
+        <h2 id="privacy-title">Privacy &amp; Analytics</h2>
+        <button type="button" class="btn btn-sm" aria-label="Close privacy notice" onclick="closePrivacyNotice()">✕ Close</button>
+      </div>
+      <p style="color:var(--text-secondary); margin-bottom:14px;">
+        This site uses Google Analytics 4 to understand how visitors use the site and to improve it.
+      </p>
+      <h3 style="margin:16px 0 6px;">Information collected</h3>
+      <p style="color:var(--text-secondary);">
+        Google Analytics may collect information such as pages viewed, interactions with the site, browser and device details,
+        referring pages, approximate location, and cookie or similar online identifiers. Analytics is configured with
+        measurement ID <strong>G-RWLKQVJCV3</strong>.
+      </p>
+      <h3 style="margin:16px 0 6px;">How it is used</h3>
+      <p style="color:var(--text-secondary);">
+        We use analytics reports to measure site traffic and understand which areas are useful. Google processes analytics
+        information under its own privacy terms. Learn more in
+        <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer">Google’s Privacy Policy</a>
+        and
+        <a href="https://policies.google.com/technologies/partner-sites" target="_blank" rel="noopener noreferrer">how Google uses information from sites and apps</a>.
+      </p>
+      <h3 style="margin:16px 0 6px;">Your choices</h3>
+      <p style="color:var(--text-secondary);">
+        You can limit or clear cookies in your browser settings. You can also opt out of Google Analytics in supported
+        browsers with the
+        <a href="https://tools.google.com/dlpage/gaoptout" target="_blank" rel="noopener noreferrer">Google Analytics Opt-out Browser Add-on</a>.
+      </p>
+    </section>
+  </div>
 
   <!-- FLOATING 3D INSPECTION SHOWCASE -->
   <div id="inspect-stage" class="inspect-overlay-stage" onclick="handleStageBackdropClick(event)">
@@ -1994,31 +2131,16 @@
       <p id="inspect-creator" style="color: var(--neon-cyan); font-weight: 600; font-size: 1rem; margin-top: 4px;"></p>
     </div>
 
-    <div class="inspect-rig-container" id="inspect-rig" onclick="toggleBookFlip()">
+    <div class="inspect-rig-container" id="inspect-rig">
       <div class="held-book-card" id="held-card">
         <div class="held-card-face held-card-front">
           <img id="held-card-cover-img" src="" alt="Cover" />
-        </div>
-        <div class="held-card-face held-card-back">
-          <div>
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-              <span id="held-back-kind" class="role-tag role-moderator">BOOK</span>
-              <span id="held-back-spice" style="color: var(--neon-crimson); font-weight: 800;">3.0 🌶️</span>
-            </div>
-            <h4 style="color: #fff; margin-bottom: 10px;">Back Cover & Synopsis</h4>
-            <div id="held-back-desc" style="font-size: 0.86rem; line-height: 1.55; color: var(--text-secondary); max-height: 250px; overflow-y: auto;"></div>
-          </div>
-          <div style="margin-top: 14px; padding-top: 10px; border-top: 1px solid var(--border-glass); display: flex; justify-content: space-between; font-size: 0.78rem; color: var(--text-secondary);">
-            <span id="held-back-isbn"></span>
-            <span id="held-back-year"></span>
-          </div>
         </div>
       </div>
       <div class="inspect-pedestal-light"></div>
     </div>
 
     <div class="inspect-action-bar">
-      <button class="btn btn-fire" onclick="toggleBookFlip()">🔄 Flip Front / Back</button>
       <button class="btn" id="inspect-full-details-btn" onclick="openHeldFullDetails()">📖 Reviews & Heat Details</button>
       <button class="btn" onclick="putMediaBackOnShelf()">⬇️ Return to Bookshelf</button>
     </div>
@@ -2026,7 +2148,7 @@
 
   <!-- MODALS -->
   <div id="modal-detail" class="modal-backdrop hidden">
-    <div class="modal-box" style="max-width: 780px;">
+    <div class="modal-box" style="max-width: 1120px;">
       <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 18px; gap: 12px;">
         <h2 id="detail-title">Title</h2><button class="btn btn-sm" onclick="closeDetailModal()">✕ Close</button>
       </div>
@@ -2063,6 +2185,7 @@
         <div class="form-row" id="add-isbn-row"><label>ISBN</label><div style="display: flex; gap: 8px;"><input type="text" id="add-isbn" /><button type="button" class="btn btn-fire" onclick="fetchMetadata()">Auto-Fetch</button></div></div>
         <div class="form-row"><label>Title</label><div style="display: flex; gap: 8px;"><input type="text" id="add-title" required /><button type="button" class="btn" onclick="fetchMetadata()">🔍 Auto-Fill</button></div></div>
         <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 12px;"><div class="form-row"><label>Creator</label><input type="text" id="add-creator" /></div><div class="form-row"><label>Year</label><input type="number" id="add-year" /></div></div>
+        <div class="form-row"><label>Series (optional)</label><input type="text" id="add-series" maxlength="200" placeholder="Series name, if applicable" /></div>
         <div class="form-row"><label>Cover Art URL</label><input type="url" id="add-cover" oninput="previewCoverArt(this.value)" /><div style="display: flex; align-items: center; gap: 14px; margin-top: 10px;"><img id="add-cover-preview" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='85' fill='%23151525'%3E%3Crect width='60' height='85'/%3E%3C/svg%3E" style="width: 60px; height: 85px; object-fit: contain; background: #080811; border-radius: 6px; border: 1px solid var(--border-glass);" /><span id="add-cover-status" style="font-size: 0.82rem; color: var(--text-secondary);">Auto-Fetch pulls high-res art.</span></div></div>
         <div class="form-row"><label>Synopsis</label><textarea id="add-desc" rows="3"></textarea></div>
         <button type="submit" class="btn btn-fire" style="width: 100%;">Save to Catalog & Shelf</button>
@@ -2081,6 +2204,7 @@
         <div class="form-row" id="edit-isbn-row"><label>ISBN</label><div style="display: flex; gap: 8px;"><input type="text" id="edit-isbn" /><button type="button" class="btn btn-fire" onclick="fetchEditMetadata()">Auto-Fetch</button></div></div>
         <div class="form-row"><label>Title</label><div style="display: flex; gap: 8px;"><input type="text" id="edit-title" required /><button type="button" class="btn" onclick="fetchEditMetadata()">🔍 Auto-Fill</button></div></div>
         <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 12px;"><div class="form-row"><label>Creator</label><input type="text" id="edit-creator" /></div><div class="form-row"><label>Year</label><input type="number" id="edit-year" /></div></div>
+        <div class="form-row"><label>Series (optional)</label><input type="text" id="edit-series" maxlength="200" placeholder="Series name, if applicable" /></div>
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;"><div class="form-row"><label>Catalog Rating (0–5)</label><input type="number" id="edit-catalog-rating" min="0" max="5" step="0.1" /></div><div class="form-row"><label>Genres</label><input type="text" id="edit-genres" /></div></div>
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;"><div class="form-row"><label>Tropes</label><input type="text" id="edit-tropes" /></div><div class="form-row"><label>Tags</label><input type="text" id="edit-tags" /></div></div>
         <div class="form-row"><label>Cover URL</label><input type="url" id="edit-cover" oninput="previewCoverArt(this.value, 'edit-cover-preview')" /><div style="display: flex; align-items: center; gap: 14px; margin-top: 10px;"><img id="edit-cover-preview" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='85' fill='%23151525'%3E%3Crect width='60' height='85'/%3E%3C/svg%3E" style="width: 60px; height: 85px; object-fit: contain; background: #080811; border-radius: 6px; border: 1px solid var(--border-glass);" /><span id="edit-cover-status" style="font-size: 0.82rem; color: var(--text-secondary);"></span></div></div>
@@ -2137,7 +2261,7 @@
         <p style="text-align: center; margin-top: 14px; font-size: 0.85rem; color: var(--text-secondary); cursor: pointer;" onclick="toggleForgotMode()">Back</p>
       </form>
       <form id="form-auth-reset" class="hidden" onsubmit="submitResetPassword(event)">
-        <div class="form-row"><label>Reset Token</label><input type="text" id="reset-token" required /></div>
+        <input type="hidden" id="reset-token" />
         <div class="form-row"><label>New Password</label><input type="password" id="reset-password" required minlength="8" /></div>
         <button type="submit" class="btn btn-fire" style="width: 100%;">Update Password</button>
         <p style="text-align: center; margin-top: 14px; font-size: 0.85rem; color: var(--text-secondary); cursor: pointer;" onclick="toggleForgotMode()">Cancel</p>
@@ -2152,6 +2276,13 @@
     let currentUser = null;
     let appSettings = { allow_emojis: '1', allow_gifs: '1' };
     let catalogCache = [];
+    let catalogTotal = 0;
+    let catalogLoading = false;
+    let catalogHasMore = false;
+    let catalogRequestId = 0;
+    let catalogLoadError = '';
+    let catalogLoadingAll = false;
+    let catalogRetryAppend = false;
     let currentShelfItems = [];
     let currentShelfOwner = null;
     let currentChatPartnerId = null;
@@ -2166,6 +2297,8 @@
     let catalogViewMode = 'shelf';
     let userShelfViewMode = 'shelf';
     let activeInspectedItem = null;
+    let currentDetailTitleId = null;
+    let privacyReturnFocus = null;
 
     let swarmNodes = [];
     let swarmAnimId = null;
@@ -2200,16 +2333,47 @@
     }
 
     window.addEventListener('DOMContentLoaded', async () => {
+      window.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+          closePrivacyNotice();
+          putMediaBackOnShelf();
+        }
+      });
+
       initVisitorCounter();
       await fetchSettings();
       if (authToken) await fetchCurrentUser();
       renderHeaderUser();
+      const resetToken = new URLSearchParams(window.location.search).get('resetToken');
+      if (resetToken) {
+        document.getElementById('reset-token').value = resetToken;
+        document.getElementById('form-auth-main').classList.add('hidden');
+        document.getElementById('form-auth-forgot').classList.add('hidden');
+        document.getElementById('form-auth-reset').classList.remove('hidden');
+        document.getElementById('auth-heading').innerText = 'Set Your Password';
+        document.getElementById('modal-auth').classList.remove('hidden');
+        window.history.replaceState(null, '', window.location.pathname + window.location.hash);
+      }
       await loadCatalog();
-
-      window.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') putMediaBackOnShelf();
-      });
     });
+
+    function openPrivacyNotice() {
+      privacyReturnFocus = document.activeElement;
+      document.getElementById('modal-privacy').classList.remove('hidden');
+      document.querySelector('#modal-privacy [role="dialog"]').focus();
+    }
+
+    function closePrivacyNotice() {
+      const modal = document.getElementById('modal-privacy');
+      if (modal.classList.contains('hidden')) return;
+      modal.classList.add('hidden');
+      if (privacyReturnFocus instanceof HTMLElement) privacyReturnFocus.focus();
+      privacyReturnFocus = null;
+    }
+
+    function handlePrivacyBackdropClick(event) {
+      if (event.target.id === 'modal-privacy') closePrivacyNotice();
+    }
 
     // --- Visitor Counter ---
     async function initVisitorCounter() {
@@ -2479,6 +2643,10 @@
 
     function switchView(view) {
       if (chatPollTimer) clearInterval(chatPollTimer);
+      if (view === 'admin' && (!currentUser || currentUser.role !== 'admin')) {
+        alert('Administrator access is required.');
+        return;
+      }
       ['catalog', 'community', 'members', 'library', 'admin', 'inbox'].forEach(v => {
         const sec = document.getElementById(`view-${v}`); const tab = document.getElementById(`tab-${v}`);
         if (sec) sec.classList.toggle('hidden', v !== view);
@@ -2493,12 +2661,200 @@
     }
 
     function showAdminSection(sec) {
-      const isImport = (sec === 'import');
-      document.getElementById('admin-sec-import').classList.toggle('hidden', !isImport);
-      document.getElementById('admin-sec-queue').classList.toggle('hidden', isImport);
-      document.getElementById('btn-admin-import').classList.toggle('active', isImport);
-      document.getElementById('btn-admin-queue').classList.toggle('active', !isImport);
-      if (!isImport) loadAdminQueue();
+      if (!currentUser || currentUser.role !== 'admin') return;
+      const sections = ['import', 'queue', 'users', 'moderation'];
+      if (!sections.includes(sec)) sec = 'import';
+      for (const section of sections) {
+        document.getElementById(`admin-sec-${section}`).classList.toggle('hidden', section !== sec);
+        document.getElementById(`btn-admin-${section}`).classList.toggle('active', section === sec);
+      }
+      if (sec === 'queue') loadAdminQueue();
+      if (sec === 'users') loadAdminUsers();
+      if (sec === 'moderation') loadAdminCommunity();
+    }
+
+    async function adminRequest(route, options = {}) {
+      const headers = { 'Authorization': `Bearer ${authToken}`, ...(options.headers || {}) };
+      if (options.body && !headers['Content-Type']) headers['Content-Type'] = 'application/json';
+      const [path, query = ''] = route.split('?');
+      const queryString = query ? `&${query}` : '';
+      const response = await fetch(`${API}?route=${encodeURIComponent(path)}${queryString}`, { ...options, headers });
+      let data;
+      try { data = await response.json(); }
+      catch { throw new Error('The server returned an unreadable response.'); }
+      if (!response.ok) throw new Error(data.error || 'The admin request failed.');
+      return data;
+    }
+
+    async function loadAdminUsers() {
+      if (!currentUser || currentUser.role !== 'admin') return;
+      const list = document.getElementById('admin-users-list');
+      list.innerHTML = '<p style="color:var(--text-secondary);">Loading users…</p>';
+      try {
+        const query = document.getElementById('admin-user-search').value.trim();
+        const result = await adminRequest(`/admin/users${query ? `?q=${encodeURIComponent(query)}` : ''}`);
+        if (!result.users.length) {
+          list.innerHTML = '<p style="color:var(--text-secondary);">No matching users.</p>';
+          return;
+        }
+        list.innerHTML = result.users.map(user => `
+          <article class="glass-panel" style="padding:14px; margin-bottom:10px;">
+            <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:12px; flex-wrap:wrap;">
+              <div>
+                <strong>${escapeHtml(user.name)}</strong>
+                <div style="color:var(--text-secondary); font-size:.86rem;">${escapeHtml(user.email)}${user.username ? ` · @${escapeHtml(user.username)}` : ''}</div>
+                <div style="color:var(--text-secondary); font-size:.8rem; margin-top:4px;">${user.reviewCount} reviews · ${user.postCount} posts · ${user.isActive ? 'Active' : 'Deactivated'}</div>
+              </div>
+              <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+                <select aria-label="Role for ${escapeHtml(user.name)}" class="select-input" onchange="changeAdminUserRole(${user.id}, this.value)">
+                  <option value="member" ${user.role === 'member' ? 'selected' : ''}>Member</option>
+                  <option value="moderator" ${user.role === 'moderator' ? 'selected' : ''}>Moderator</option>
+                  <option value="admin" ${user.role === 'admin' ? 'selected' : ''}>Admin</option>
+                </select>
+                <button class="btn btn-sm" onclick="sendAdminPasswordReset(${user.id})" ${user.isActive ? '' : 'disabled'}>Send reset</button>
+                <button class="btn btn-sm ${user.isActive ? '' : 'btn-fire'}" onclick="setAdminUserActive(${user.id}, ${!user.isActive})">${user.isActive ? 'Deactivate' : 'Reactivate'}</button>
+              </div>
+            </div>
+          </article>`).join('') + `<p style="color:var(--text-secondary); font-size:.82rem;">Showing ${result.users.length} of ${result.total} users.</p>`;
+      } catch (error) {
+        list.innerHTML = `<p role="alert" style="color:var(--neon-crimson);">${escapeHtml(error.message)}</p>`;
+      }
+    }
+
+    function searchAdminUsers(event) {
+      event.preventDefault();
+      loadAdminUsers();
+    }
+
+    async function createAdminUser(event) {
+      event.preventDefault();
+      const status = document.getElementById('admin-user-create-status');
+      status.textContent = 'Creating account and sending setup email…';
+      try {
+        const result = await adminRequest('/admin/users', {
+          method: 'POST',
+          body: JSON.stringify({
+            name: document.getElementById('admin-new-user-name').value.trim(),
+            email: document.getElementById('admin-new-user-email').value.trim()
+          })
+        });
+        status.textContent = result.message;
+        event.target.reset();
+        await loadAdminUsers();
+      } catch (error) {
+        status.textContent = error.message;
+        status.setAttribute('role', 'alert');
+      }
+    }
+
+    async function sendAdminPasswordReset(userId) {
+      if (!confirm('Send this active user a secure, one-time password reset link?')) return;
+      try {
+        const result = await adminRequest(`/admin/users/${userId}/password-reset`, { method: 'POST' });
+        alert(result.message);
+      } catch (error) {
+        alert(error.message);
+      }
+    }
+
+    async function setAdminUserActive(userId, isActive) {
+      const action = isActive ? 'reactivate' : 'deactivate';
+      if (!confirm(`Are you sure you want to ${action} this account?`)) return;
+      try {
+        await adminRequest(`/admin/users/${userId}/status`, {
+          method: 'PATCH',
+          body: JSON.stringify({ isActive })
+        });
+        await loadAdminUsers();
+      } catch (error) {
+        alert(error.message);
+      }
+    }
+
+    async function changeAdminUserRole(userId, role) {
+      try {
+        await adminRequest(`/admin/users/${userId}/role`, {
+          method: 'PATCH',
+          body: JSON.stringify({ role })
+        });
+      } catch (error) {
+        alert(error.message);
+        await loadAdminUsers();
+      }
+    }
+
+    async function loadAdminCommunity() {
+      if (!currentUser || currentUser.role !== 'admin') return;
+      const list = document.getElementById('admin-community-list');
+      list.innerHTML = '<p style="color:var(--text-secondary);">Loading discussions…</p>';
+      try {
+        const result = await adminRequest('/admin/community/posts');
+        const postsById = new Map(result.posts.map(post => [post.id, post]));
+        const postsMarkup = result.posts.map(post => `
+          <article class="glass-panel" style="padding:14px; margin-bottom:10px;">
+            <div style="display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap;">
+              <div style="min-width:0; flex:1;">
+                <strong>${escapeHtml(post.topic)}</strong>
+                <div style="font-size:.82rem; color:var(--text-secondary);">${escapeHtml(post.authorName)} · ${escapeHtml(post.authorEmail)} · ${post.commentCount} replies · ${post.isLocked ? 'Locked' : 'Open'}</div>
+                <p style="margin-top:8px; overflow-wrap:anywhere;">${escapeHtml(post.body)}</p>
+              </div>
+              <div style="display:flex; gap:8px; align-items:flex-start; flex-wrap:wrap;">
+                <button class="btn btn-sm" onclick="setAdminPostLock(${post.id}, ${!post.isLocked})">${post.isLocked ? 'Unlock' : 'Lock replies'}</button>
+                <button class="btn btn-sm" style="color:var(--neon-crimson);" onclick="deleteAdminPost(${post.id})">Delete post</button>
+              </div>
+            </div>
+          </article>`).join('');
+        const commentsMarkup = result.comments.map(comment => {
+          const parentPost = postsById.get(comment.postId);
+          return `
+            <article class="glass-panel" style="padding:12px; margin-bottom:8px;">
+              <div style="display:flex; justify-content:space-between; gap:10px; align-items:flex-start;">
+                <div style="min-width:0;">
+                  <div style="font-size:.82rem; color:var(--text-secondary);">${escapeHtml(comment.authorName)} · ${escapeHtml(comment.authorEmail)}${parentPost ? ` · on “${escapeHtml(parentPost.topic)}”` : ''}</div>
+                  <div style="margin-top:5px; overflow-wrap:anywhere;">${escapeHtml(comment.body)}</div>
+                </div>
+                <button class="btn btn-sm" style="color:var(--neon-crimson);" onclick="deleteAdminComment(${comment.id})">Delete</button>
+              </div>
+            </article>`;
+        }).join('');
+        list.innerHTML = `<h3 style="margin-bottom:10px;">Latest discussions (${result.posts.length})</h3>${postsMarkup || '<p style="color:var(--text-secondary);">No discussions yet.</p>'}
+          <h3 style="margin:22px 0 10px;">Latest comments (${result.comments.length})</h3>${commentsMarkup || '<p style="color:var(--text-secondary);">No comments yet.</p>'}
+          <p style="color:var(--text-secondary); font-size:.8rem; margin-top:12px;">Showing up to 100 discussions and 300 comments.</p>`;
+      } catch (error) {
+        list.innerHTML = `<p role="alert" style="color:var(--neon-crimson);">${escapeHtml(error.message)}</p>`;
+      }
+    }
+
+    async function setAdminPostLock(postId, isLocked) {
+      try {
+        await adminRequest(`/admin/community/posts/${postId}/lock`, {
+          method: 'PATCH',
+          body: JSON.stringify({ isLocked })
+        });
+        await loadAdminCommunity();
+      } catch (error) {
+        alert(error.message);
+      }
+    }
+
+    async function deleteAdminPost(postId) {
+      if (!confirm('Delete this discussion and all of its comments? This cannot be undone.')) return;
+      try {
+        await adminRequest(`/admin/community/posts/${postId}`, { method: 'DELETE' });
+        await loadAdminCommunity();
+      } catch (error) {
+        alert(error.message);
+      }
+    }
+
+    async function deleteAdminComment(commentId) {
+      if (!confirm('Delete this comment? This cannot be undone.')) return;
+      try {
+        await adminRequest(`/admin/community/comments/${commentId}`, { method: 'DELETE' });
+        await loadAdminCommunity();
+      } catch (error) {
+        alert(error.message);
+      }
     }
 
     async function toggleAdminSetting(key, checked) {
@@ -2992,19 +3348,81 @@
       document.getElementById('catalog-grid').classList.toggle('hidden', mode !== 'grid');
 
       renderCatalogView();
+      if (mode === 'grid' && catalogHasMore) loadAllCatalog();
     }
 
-    async function loadCatalog() {
+    async function loadCatalog(append = false) {
+      if (append && (catalogLoading || !catalogHasMore)) return;
+      const requestId = ++catalogRequestId;
+      catalogLoading = true;
+      catalogLoadError = '';
+      catalogRetryAppend = append;
       const q = document.getElementById('catalog-search').value.trim();
       const kind = document.getElementById('catalog-kind').value;
       const minSpice = document.getElementById('catalog-spice').value;
 
-      let url = `${API}?route=/titles&q=${encodeURIComponent(q)}&kind=${encodeURIComponent(kind)}`;
+      const offset = append ? catalogCache.length : 0;
+      let url = `${API}?route=/titles&q=${encodeURIComponent(q)}&kind=${encodeURIComponent(kind)}&limit=200&offset=${offset}`;
       if (minSpice !== '') url += minSpice === '0' ? `&maxSpice=0.4` : `&minSpice=${encodeURIComponent(minSpice)}`;
 
-      const res = await fetch(url);
-      catalogCache = (await res.json()).titles || [];
-      renderCatalogView();
+      renderCatalogMoreControl();
+      try {
+        const res = await fetch(url);
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Could not load catalog titles.');
+        if (requestId !== catalogRequestId) return false;
+        const titles = data.titles || [];
+        catalogCache = append ? [...catalogCache, ...titles] : titles;
+        catalogTotal = Number(data.total ?? catalogCache.length);
+        catalogHasMore = Boolean(data.hasMore) || catalogCache.length < catalogTotal;
+        renderCatalogView();
+        return true;
+      } catch (error) {
+        if (requestId !== catalogRequestId) return false;
+        catalogLoadError = error.message || 'Could not load catalog titles.';
+        renderCatalogMoreControl();
+        return false;
+      } finally {
+        if (requestId === catalogRequestId) {
+          catalogLoading = false;
+          renderCatalogMoreControl();
+          if (catalogViewMode === 'grid' && catalogHasMore && !catalogLoadingAll) loadAllCatalog();
+        }
+      }
+    }
+
+    async function loadAllCatalog() {
+      if (catalogLoading || catalogLoadingAll || !catalogHasMore) return;
+      catalogLoadingAll = true;
+      renderCatalogMoreControl();
+      try {
+        while (catalogHasMore && !catalogLoadError) {
+          const previousCount = catalogCache.length;
+          const loaded = await loadCatalog(true);
+          if (!loaded || catalogCache.length === previousCount) break;
+        }
+      } finally {
+        catalogLoadingAll = false;
+        renderCatalogMoreControl();
+      }
+    }
+
+    function renderCatalogMoreControl() {
+      const control = document.getElementById('catalog-more-control');
+      if (!control) return;
+      if (catalogLoading) {
+        control.innerHTML = `<span>${catalogLoadingAll ? 'Loading all titles…' : 'Loading titles…'} (${catalogCache.length} of ${catalogTotal || '…'})</span>`;
+      } else if (catalogLoadError) {
+        control.innerHTML = `<span role="alert">${escapeHtml(catalogLoadError)}</span><button class="btn btn-sm" onclick="loadCatalog(${catalogRetryAppend})">Try again</button>`;
+      } else if (catalogLoadingAll) {
+        control.innerHTML = `<span>Loading all titles… (${catalogCache.length} of ${catalogTotal})</span>`;
+      } else if (catalogHasMore) {
+        control.innerHTML = `<span>Showing ${catalogCache.length} of ${catalogTotal} titles</span><button class="btn btn-fire btn-sm" onclick="loadCatalog(true)">Load 200 more titles</button>`;
+      } else if (catalogTotal > 0) {
+        control.innerHTML = `<span>All ${catalogTotal} titles loaded</span>`;
+      } else {
+        control.innerHTML = '';
+      }
     }
 
     function renderCatalogView() {
@@ -3031,11 +3449,12 @@
       if (rankedTitles.length === 0) {
         grid.innerHTML = `<div class="glass-panel" style="grid-column: 1/-1; text-align: center;">No media matched your filter. Click <strong>+ Add Media</strong> to add it!</div>`;
         shelfContainer.innerHTML = `<div style="text-align: center; padding: 40px; color: var(--text-secondary);">No media on the shelves right now. Add one above!</div>`;
+        renderCatalogMoreControl();
         return;
       }
 
       grid.innerHTML = rankedTitles.map((item, index) => `
-        <div class="media-card" onclick="pullMediaIntoView(${item.id})">
+        <div class="media-card" onclick="openTitleDetail(${item.id})">
           <div class="card-cover-wrap"><img class="card-cover" src="${escapeHtml(item.coverUrl || FALLBACK_COVER)}" loading="lazy" onerror="this.src='${FALLBACK_COVER}'" />
             <span class="kind-pill">${escapeHtml(item.kind)}</span><div class="spice-badge-overlay">${renderChilis(item.averageSpice)}</div>
           </div>
@@ -3051,6 +3470,7 @@
         </div>`).join('');
 
       renderShelvesToContainer(shelfContainer, rankedTitles, false);
+      renderCatalogMoreControl();
     }
 
     // ==========================================
@@ -3397,11 +3817,12 @@
             ${tier.map((item, i) => {
               const id = item.titleId || item.id;
               const spice = item.averageSpice ?? item.userSpice;
+              const statusLabel = { planned: 'Not Started', in_progress: 'In Progress', completed: 'Completed', dropped: 'Dropped' }[item.status] || 'On Shelf';
               const label = isPersonalShelf
-                ? (spice !== null && spice !== undefined ? `${Number(spice).toFixed(1)} 🌶️` : '✨')
+                ? statusLabel
                 : `#${idx * chunkSize + i + 1} · ${spice !== null && spice !== undefined ? `${Number(spice).toFixed(1)} 🌶️` : 'Unrated'}`;
               return `
-                <div class="shelf-item" style="animation-delay: ${i * 0.03}s;" data-id="${id}" onclick="pullMediaIntoView(${id})" title="Click to inspect front & back cover">
+                <div class="shelf-item" style="animation-delay: ${i * 0.03}s;" data-id="${id}" onclick="openTitleDetail(${id})" title="View title details">
                   <div class="shelf-item-spine">
                     <img class="shelf-item-cover" src="${escapeHtml(item.coverUrl || FALLBACK_COVER)}" loading="lazy" onerror="this.src='${FALLBACK_COVER}'" />
                     <span class="shelf-item-tag">${label}</span>
@@ -3450,27 +3871,14 @@
 
       activeInspectedItem = item;
       const stage = document.getElementById('inspect-stage');
-      const card = document.getElementById('held-card');
-      card.classList.remove('is-flipped');
 
       document.getElementById('inspect-title').innerText = item.title;
       document.getElementById('inspect-creator').innerText = item.creator ? `By ${item.creator}` : (item.kind || '').toUpperCase();
       document.getElementById('held-card-cover-img').src = item.coverUrl || FALLBACK_COVER;
-      document.getElementById('held-back-kind').innerText = (item.kind || 'media').toUpperCase();
-
-      const spiceVal = item.averageSpice ?? item.userSpice;
-      document.getElementById('held-back-spice').innerText = spiceVal !== null && spiceVal !== undefined ? `${Number(spiceVal).toFixed(1)} 🌶️` : 'Unrated 🌶️';
-      document.getElementById('held-back-desc').innerText = item.description || "No synopsis available for the back cover. Add one in metadata edit!";
-      document.getElementById('held-back-isbn').innerText = item.isbn ? `ISBN: ${item.isbn}` : '';
-      document.getElementById('held-back-year').innerText = item.releaseYear ? `Year: ${item.releaseYear}` : '';
 
       stage.classList.add('active');
     }
 
-    function toggleBookFlip() {
-      const card = document.getElementById('held-card');
-      if (card) card.classList.toggle('is-flipped');
-    }
     function putMediaBackOnShelf() {
       document.getElementById('inspect-stage').classList.remove('active');
       activeInspectedItem = null;
@@ -3487,41 +3895,78 @@
 
     // --- Title Detail ---
     async function openTitleDetail(titleId) {
-      let item = catalogCache.find(t => t.id === titleId) ||
-                 currentShelfItems.find(t => (t.titleId || t.id) === titleId);
-
-      if (!item) {
-        const res = await fetch(`${API}?route=/titles&q=${titleId}`);
-        const data = await res.json();
-        item = (data.titles || []).find(t => t.id === titleId);
-      }
-      if (!item) return;
-
-      document.getElementById('detail-title').innerText = item.title;
+      currentDetailTitleId = Number(titleId);
+      document.getElementById('detail-title').innerText = 'Loading title…';
       document.getElementById('modal-detail').classList.remove('hidden');
-      const revData = await (await fetch(`${API}?route=${encodeURIComponent(`/titles/${titleId}/reviews`)}`)).json();
+      const detailContent = document.getElementById('detail-content');
+      detailContent.innerHTML = '<p style="color:var(--text-secondary);">Loading title details…</p>';
+      const headers = authToken ? { 'Authorization': `Bearer ${authToken}` } : {};
+      let detailData;
+      try {
+        const detailResponse = await fetch(`${API}?route=${encodeURIComponent(`/titles/${titleId}/related`)}`, { headers });
+        detailData = await detailResponse.json();
+        if (!detailResponse.ok) throw new Error(detailData.error || 'Could not load title details.');
+      } catch (error) {
+        detailContent.innerHTML = `<p role="alert" style="color:var(--neon-crimson);">${escapeHtml(error.message || 'Could not load title details.')}</p>`;
+        return;
+      }
+
+      const item = detailData.title;
+      if (!item || Number(item.id) !== Number(titleId)) {
+        detailContent.innerHTML = '<p role="alert" style="color:var(--neon-crimson);">Title details were unavailable.</p>';
+        return;
+      }
+      const cacheIndex = catalogCache.findIndex(title => Number(title.id) === Number(titleId));
+      if (cacheIndex >= 0) catalogCache[cacheIndex] = { ...catalogCache[cacheIndex], ...item };
+      document.getElementById('detail-title').innerText = item.title;
+
+      const reviewResponse = await fetch(`${API}?route=${encodeURIComponent(`/titles/${titleId}/reviews`)}`);
+      const revData = await reviewResponse.json();
+      if (!reviewResponse.ok) {
+        detailContent.innerHTML = `<p role="alert" style="color:var(--neon-crimson);">${escapeHtml(revData.error || 'Could not load community reviews.')}</p>`;
+        return;
+      }
       selectedSpice = 3;
 
-      document.getElementById('detail-content').innerHTML = `
-        <div style="display: grid; grid-template-columns: 180px 1fr; gap: 22px; margin-bottom: 24px;">
+      const savedStatus = detailData.viewerStatus;
+      const shelfStatusPanel = !currentUser
+        ? `<div class="detail-status-panel"><strong>My Shelf Status</strong><p style="color:var(--text-secondary); margin:6px 0 10px;">Sign in to track your reading progress.</p><button class="btn btn-fire btn-sm" onclick="openAuthModal()">Sign in to track</button></div>`
+        : savedStatus
+          ? `<div class="detail-status-panel"><label for="detail-shelf-status"><strong>My Shelf Status</strong></label><div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-top:8px;"><select id="detail-shelf-status" class="select-input" onchange="saveDetailShelfStatus(${titleId})">${shelfStatusOptions(savedStatus)}</select><button class="btn btn-sm" onclick="removeShelfItemFromDetail(${titleId})">Remove from shelf</button></div></div>`
+          : `<div class="detail-status-panel"><label for="detail-shelf-status"><strong>My Shelf Status</strong></label><div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-top:8px;"><select id="detail-shelf-status" class="select-input">${shelfStatusOptions('planned')}</select><button class="btn btn-fire btn-sm" onclick="addDetailToShelf(${titleId})">Add to my shelf</button></div></div>`;
+      const relatedMarkup = (detailData.related || []).length
+        ? detailData.related.map(related => `
+            <button type="button" class="related-title-card" onclick="openTitleDetail(${related.id})" aria-label="View ${escapeHtml(related.title)}">
+              <img src="${escapeHtml(related.coverUrl || FALLBACK_COVER)}" loading="lazy" alt="" onerror="this.src='${FALLBACK_COVER}'" />
+              <span><strong>${escapeHtml(related.title)}</strong><small>${escapeHtml(related.creator || 'Unknown author')}${related.releaseYear ? ` · ${related.releaseYear}` : ''}</small><small>${escapeHtml(related.matchReason || 'Similar title')}</small></span>
+            </button>`).join('')
+        : '<p style="color:var(--text-secondary); font-size:.82rem; margin-top:10px;">No closely related titles found yet. Add series, genre, or trope details to improve recommendations.</p>';
+
+      detailContent.innerHTML = `
+        <div class="title-detail-layout">
+        <div class="title-detail-main">
+        <div class="title-detail-overview">
           <img src="${escapeHtml(item.coverUrl || FALLBACK_COVER)}" style="width: 180px; height: 260px; object-fit: contain; border-radius: 12px; border: 1px solid var(--border-neon); background: #080811;" loading="lazy" onerror="this.src='${FALLBACK_COVER}'" />
           <div>
             <div style="display: flex; gap: 10px; align-items: center; flex-wrap:wrap; margin-bottom: 8px;"><span class="role-tag role-moderator">${escapeHtml(item.kind)}</span><span style="color: var(--text-secondary); font-size: 0.9rem;">${item.creator ? renderDiscoveryLink('creator', item.creator, item.kind, item.creator) : ''} ${item.releaseYear ? `(${item.releaseYear})` : ''}</span></div>
+            ${item.series ? `<div style="margin-bottom:8px; color:var(--neon-cyan); font-size:.86rem;"><strong>Series:</strong> ${escapeHtml(item.series)}</div>` : ''}
             <div style="display: flex; gap: 18px; margin: 14px 0; padding: 14px 18px; background: rgba(255,42,84,0.08); border: 1px solid var(--border-neon); border-radius: 12px;">
               <div><div style="font-size: 0.72rem; color: var(--text-secondary); letter-spacing: 0.06em; font-weight: 600;">HEAT</div><div style="font-size: 1.35rem; font-weight: 800; color: var(--neon-crimson); font-family: 'Outfit', sans-serif;">${renderChilis(item.averageSpice ?? item.userSpice)}</div></div>
               <div style="border-left: 1px solid var(--border-glass); padding-left: 18px;"><div style="font-size: 0.72rem; color: var(--text-secondary); letter-spacing: 0.06em; font-weight: 600;">SCORE</div><div style="font-size: 1.35rem; font-weight: 800; color: var(--neon-gold); font-family: 'Outfit', sans-serif;">★ ${item.averageRating ? item.averageRating.toFixed(1) : (item.userRating ? item.userRating.toFixed(1) : '—')}</div></div>
             </div>
-            ${(item.catalogRating !== null && item.catalogRating !== undefined) || item.genres || item.tropes || item.tags ? `<div style="font-size:.84rem; line-height:1.6; margin-bottom:12px; color:var(--text-secondary);">
+            ${(item.catalogRating !== null && item.catalogRating !== undefined) || item.genres || item.tropes || item.tags || item.isbn || item.barcode || item.reviewCount ? `<div style="font-size:.84rem; line-height:1.6; margin-bottom:12px; color:var(--text-secondary);">
               ${item.catalogRating !== null && item.catalogRating !== undefined ? `<div><strong style="color:var(--neon-gold);">Catalog rating:</strong> ${Number(item.catalogRating).toFixed(1)}/5</div>` : ''}
               ${item.genres ? `<div><strong>Genres:</strong> ${renderGenreDiscoveryLinks(item.genres)}</div>` : ''}
               ${item.tropes ? `<div><strong>Tropes:</strong> ${escapeHtml(item.tropes)}</div>` : ''}
               ${item.tags ? `<div><strong>Tags:</strong> ${escapeHtml(item.tags)}</div>` : ''}
+              ${item.isbn ? `<div><strong>ISBN:</strong> ${escapeHtml(item.isbn)}</div>` : ''}
+              ${item.barcode ? `<div><strong>Barcode:</strong> ${escapeHtml(item.barcode)}</div>` : ''}
+              ${item.reviewCount ? `<div>${item.reviewCount} community rating${item.reviewCount === 1 ? '' : 's'}</div>` : ''}
             </div>` : ''}
             <p style="color: var(--text-secondary); font-size: 0.92rem; line-height: 1.55; margin-bottom: 14px;">${formatContent(item.description || 'No synopsis added yet.')}</p>
+            ${shelfStatusPanel}
             <div style="display: flex; gap: 10px; flex-wrap: wrap;">
               ${item.kind === 'book' ? `<div style="display: flex; flex-direction: column; gap: 5px;"><a class="btn btn-fire btn-sm" href="${amazonBookUrl(item)}" target="_blank" rel="sponsored noopener noreferrer">🛒 Buy on Amazon</a><span style="font-size: 0.72rem; color: var(--text-secondary);">As an Amazon Associate I earn from qualifying purchases.</span></div>` : ''}
-              <button class="btn btn-sm" onclick="closeDetailModal(); pullMediaIntoView(${titleId});">🔍 Inspect 3D Cover</button>
-              <button class="btn btn-fire btn-sm" onclick="quickAddShelf(${titleId})">📚 Add to My Shelf</button>
               ${currentUser && currentUser.role === 'admin' ? `<button class="btn btn-sm" style="color:var(--neon-cyan); border-color:var(--neon-cyan);" onclick="openEditTitleModal(${titleId})">✏️ Edit</button><button class="btn btn-sm" style="color:var(--neon-crimson); border-color:var(--border-neon);" onclick="deleteTitle(${titleId})">🗑️ Delete</button>` : ''}
             </div>
           </div>
@@ -3554,6 +3999,13 @@
               ${r.warnings && r.warnings.length ? `<div style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px;">${r.warnings.map(w => `<span class="role-tag role-member">${escapeHtml(w)}</span>`).join('')}</div>` : ''}
               <div class="${r.containsSpoilers ? 'spoiler-blur' : ''}" onclick="this.classList.add('revealed')" title="${r.containsSpoilers ? 'Click to reveal spoiler' : ''}">${formatContent(r.notes)}</div>
             </div>`).join('')}
+        </div>
+        </div>
+        <aside class="related-title-rail" aria-label="Related books">
+          <h3 style="font-size:1rem;">${item.kind === 'book' ? 'More books to explore' : 'More like this'}</h3>
+          <p style="color:var(--text-secondary); font-size:.76rem; margin-top:4px;">Same series or author, plus shared genres and tropes.</p>
+          ${relatedMarkup}
+        </aside>
         </div>`;
     }
 
@@ -3592,8 +4044,14 @@
     }
 
     async function loadCommunityPosts(category = '') {
-      const posts = (await (await fetch(`${API}?route=/community/posts${category ? `&category=${encodeURIComponent(category)}` : ''}`)).json()).posts || [];
+      const response = await fetch(`${API}?route=/community/posts${category ? `&category=${encodeURIComponent(category)}` : ''}`);
+      const data = await response.json();
       const feed = document.getElementById('community-feed');
+      if (!response.ok) {
+        feed.innerHTML = `<div role="alert" class="glass-panel" style="color:var(--neon-crimson);">${escapeHtml(data.error || 'Could not load discussions.')}</div>`;
+        return;
+      }
+      const posts = data.posts || [];
       if (posts.length === 0) { feed.innerHTML = `<div class="glass-panel" style="text-align: center; color: var(--text-secondary);">No discussions in this channel yet. Kick off the conversation above!</div>`; return; }
 
       feed.innerHTML = posts.map(p => `
@@ -3607,6 +4065,7 @@
             <span class="role-tag role-member">${escapeHtml(p.category.replace('_', ' / '))}</span>
           </div>
           <h3 style="margin-bottom: 8px; font-size: 1.12rem;">${escapeHtml(p.topic)}</h3>
+          ${p.isLocked ? '<div class="role-tag role-moderator" style="display:inline-block; margin-bottom:8px;">🔒 Replies locked</div>' : ''}
           <p style="color: var(--text-primary); line-height: 1.55; font-size: 0.92rem;">${formatContent(p.body)}</p>
           ${p.linkedTitleId ? `<div class="linked-media-chip" onclick="pullMediaIntoView(${p.linkedTitleId})">🌶️ Linked Media: <strong>${escapeHtml(p.linkedTitleName)}</strong> (${escapeHtml(p.linkedTitleKind)})</div>` : ''}
           <div style="display: flex; gap: 12px; align-items: center; margin-top: 14px;">
@@ -3620,10 +4079,10 @@
                 </div>
                 <div style="padding-left: 26px;">${formatContent(c.body)}</div>
               </div>`).join('')}
-            <form onsubmit="submitComment(event, ${p.id})" style="display: flex; gap: 8px; margin-top: 6px;">
+            ${p.isLocked ? '<p style="color:var(--text-secondary); font-size:.82rem; margin-top:8px;">This discussion is locked and no longer accepts replies.</p>' : `<form onsubmit="submitComment(event, ${p.id})" style="display: flex; gap: 8px; margin-top: 6px;">
               <input type="text" id="reply-input-${p.id}" placeholder="Write a reply or drop a GIF link..." required style="flex: 1; background: #07060d; border: 1px solid var(--border-glass-strong); color: #fff; padding: 9px 13px; border-radius: 9px; font-size: 0.85rem; font-family: inherit;" />
               <button type="submit" class="btn btn-sm btn-fire">Reply</button>
-            </form>
+            </form>`}
           </div>
         </div>`).join('');
     }
@@ -3654,6 +4113,15 @@
       document.getElementById('user-shelf-container').classList.toggle('hidden', mode !== 'shelf');
       document.getElementById('shelf-grid').classList.toggle('hidden', mode !== 'grid');
       renderShelfItems();
+    }
+
+    function shelfStatusOptions(selectedStatus) {
+      return [
+        ['planned', '📌 Not Started'],
+        ['in_progress', '🔥 In Progress'],
+        ['completed', '✅ Completed'],
+        ['dropped', '🛑 Dropped']
+      ].map(([value, label]) => `<option value="${value}" ${selectedStatus === value ? 'selected' : ''}>${label}</option>`).join('');
     }
 
     async function openUserShelf(userId) {
@@ -3704,7 +4172,7 @@
       renderShelvesToContainer(shelfContainer, list, true);
 
       grid.innerHTML = list.map(item => `
-        <div class="media-card" onclick="pullMediaIntoView(${item.titleId})">
+        <div class="media-card" onclick="openTitleDetail(${item.titleId})">
           <div class="card-cover-wrap"><img class="card-cover" src="${escapeHtml(item.coverUrl || FALLBACK_COVER)}" loading="lazy" onerror="this.src='${FALLBACK_COVER}'" />
             <span class="kind-pill">${escapeHtml(item.status.replace('_', ' '))}</span>
             ${item.userSpice !== null ? `<div class="spice-badge-overlay">My Heat: ${item.userSpice} 🌶️</div>` : ''}
@@ -3712,8 +4180,8 @@
           <div class="card-body">
             <div class="card-title">${escapeHtml(item.title)}</div><div class="card-creator">${item.creator ? renderDiscoveryLink('creator', item.creator, item.kind, item.creator) : 'Unknown'}</div>
             ${isMine ? `<div style="margin-top: auto; display: flex; gap: 6px;" onclick="event.stopPropagation()">
-                <select onchange="updateShelfStatus(${item.titleId}, this.value)" style="flex: 1; background: #07060d; color: #fff; border: 1px solid var(--border-glass-strong); border-radius: 7px; padding: 6px; font-size: 0.76rem; font-family: inherit;">
-                  <option value="completed" ${item.status === 'completed' ? 'selected' : ''}>✅ Completed</option><option value="in_progress" ${item.status === 'in_progress' ? 'selected' : ''}>🔥 In Progress</option><option value="planned" ${item.status === 'planned' ? 'selected' : ''}>📌 Planned</option><option value="dropped" ${item.status === 'dropped' ? 'selected' : ''}>🛑 Dropped</option>
+                <select aria-label="Reading status for ${escapeHtml(item.title)}" onchange="updateShelfStatus(${item.titleId}, this.value)" style="flex: 1; background: #07060d; color: #fff; border: 1px solid var(--border-glass-strong); border-radius: 7px; padding: 6px; font-size: 0.76rem; font-family: inherit;">
+                  ${shelfStatusOptions(item.status)}
                 </select>
                 <button class="btn btn-sm" style="color: var(--neon-crimson);" onclick="removeShelfItem(${item.titleId})">✕</button>
               </div>` : ''}
@@ -3732,6 +4200,38 @@
     async function removeShelfItem(titleId) {
       await fetch(`${API}?route=${encodeURIComponent(`/library/${titleId}`)}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${authToken}` } });
       openUserShelf(currentUser.id);
+    }
+
+    async function saveDetailShelfStatus(titleId) {
+      if (!currentUser || !authToken) { openAuthModal(); return; }
+      const status = document.getElementById('detail-shelf-status')?.value || 'planned';
+      const response = await fetch(`${API}?route=/library/add`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
+        body: JSON.stringify({ titleId, status })
+      });
+      const result = await response.json();
+      if (!response.ok) { alert(result.error || 'Could not update shelf status.'); return; }
+      const shelfItem = currentShelfItems.find(item => Number(item.titleId || item.id) === Number(titleId));
+      if (shelfItem) shelfItem.status = status;
+      if (currentShelfOwner && Number(currentShelfOwner.id) === Number(currentUser.id)) renderShelfItems();
+      await openTitleDetail(titleId);
+    }
+
+    async function addDetailToShelf(titleId) {
+      await saveDetailShelfStatus(titleId);
+    }
+
+    async function removeShelfItemFromDetail(titleId) {
+      const response = await fetch(`${API}?route=${encodeURIComponent(`/library/${titleId}`)}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${authToken}` }
+      });
+      const result = await response.json();
+      if (!response.ok) { alert(result.error || 'Could not remove this title from your shelf.'); return; }
+      currentShelfItems = currentShelfItems.filter(item => Number(item.titleId || item.id) !== Number(titleId));
+      if (currentShelfOwner && Number(currentShelfOwner.id) === Number(currentUser?.id)) renderShelfItems();
+      await openTitleDetail(titleId);
     }
 
     // --- Modals & Metadata ---
@@ -3777,6 +4277,7 @@
         creator: document.getElementById('add-creator').value.trim() || null,
         isbn: document.getElementById('add-isbn').value.trim() || null,
         releaseYear: document.getElementById('add-year').value ? Number(document.getElementById('add-year').value) : null,
+        series: document.getElementById('add-series').value.trim() || null,
         coverUrl: document.getElementById('add-cover').value.trim() || null,
         description: document.getElementById('add-desc').value.trim() || null
       };
@@ -3795,6 +4296,7 @@
         creator: document.getElementById('edit-creator').value.trim() || null,
         isbn: document.getElementById('edit-isbn').value.trim() || null,
         releaseYear: document.getElementById('edit-year').value ? Number(document.getElementById('edit-year').value) : null,
+        series: document.getElementById('edit-series').value.trim() || null,
         coverUrl: document.getElementById('edit-cover').value.trim() || null,
         description: document.getElementById('edit-desc').value.trim() || null,
         catalogRating: document.getElementById('edit-catalog-rating').value,
@@ -3820,6 +4322,7 @@
       document.getElementById('edit-creator').value = item.creator || '';
       document.getElementById('edit-isbn').value = item.isbn || '';
       document.getElementById('edit-year').value = item.releaseYear || '';
+      document.getElementById('edit-series').value = item.series || '';
       document.getElementById('edit-cover').value = item.coverUrl || '';
       document.getElementById('edit-desc').value = item.description || '';
       document.getElementById('edit-catalog-rating').value = item.catalogRating ?? '';
@@ -3854,18 +4357,23 @@
       const email = document.getElementById('forgot-email').value.trim();
       const res = await fetch(`${API}?route=/auth/forgot-password`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email }) });
       const data = await res.json();
-      if (data.resetToken) {
-        alert(`DEMO MODE: An email would be sent. Your reset token is: ${data.resetToken}\n\n(Copy this to paste in the next screen)`);
-        document.getElementById('form-auth-forgot').classList.add('hidden');
-        document.getElementById('form-auth-reset').classList.remove('hidden');
-      } else alert(data.message);
+      if (!res.ok) { alert(data.error || 'Could not request a password reset.'); return; }
+      alert(data.message || 'If an active account uses that email, a password reset link has been sent.');
+      closeAuthModal();
     }
     async function submitResetPassword(e) {
       e.preventDefault();
       const payload = { token: document.getElementById('reset-token').value.trim(), password: document.getElementById('reset-password').value };
       const res = await fetch(`${API}?route=/auth/reset-password`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-      if (res.ok) { alert('Password reset successfully! You can now log in.'); toggleForgotMode(); }
-      else alert((await res.json()).error || 'Failed to reset password.');
+      const data = await res.json();
+      if (res.ok) {
+        alert(data.message || 'Password reset successfully. You can now sign in.');
+        document.getElementById('reset-token').value = '';
+        document.getElementById('reset-password').value = '';
+        document.getElementById('form-auth-reset').classList.add('hidden');
+        document.getElementById('form-auth-main').classList.remove('hidden');
+        document.getElementById('auth-heading').innerText = 'Sign In';
+      } else alert(data.error || 'Failed to reset password.');
     }
   </script>
 </body>

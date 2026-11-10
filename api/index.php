@@ -38,6 +38,125 @@ function body_string(array $body, string $key): string
     return is_scalar($value) ? (string) $value : '';
 }
 
+function metadata_tokens(?string $value): array
+{
+    if ($value === null || trim($value) === '') {
+        return [];
+    }
+
+    $tokens = preg_split('/[,;|]+/u', $value) ?: [];
+    $normalized = [];
+    foreach ($tokens as $token) {
+        $token = strtolower((string) preg_replace('/\s+/u', '', trim($token)));
+        if ($token !== '') {
+            $normalized[$token] = true;
+        }
+    }
+    return array_keys($normalized);
+}
+
+function ensure_user_active_column(PDO $pdo): void
+{
+    $check = $pdo->prepare(
+        'SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
+         WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?'
+    );
+    $check->execute(['users', 'is_active']);
+    if (!$check->fetch()) {
+        try {
+            $pdo->exec('ALTER TABLE users ADD COLUMN is_active TINYINT(1) NOT NULL DEFAULT 1');
+        } catch (PDOException $error) {
+            if ($error->getCode() !== '42S21' && (int) ($error->errorInfo[1] ?? 0) !== 1060) {
+                throw $error;
+            }
+        }
+    }
+}
+
+function ensure_community_lock_column(PDO $pdo): void
+{
+    $check = $pdo->prepare(
+        'SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
+         WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?'
+    );
+    $check->execute(['community_posts', 'is_locked']);
+    if (!$check->fetch()) {
+        try {
+            $pdo->exec('ALTER TABLE community_posts ADD COLUMN is_locked TINYINT(1) NOT NULL DEFAULT 0');
+        } catch (PDOException $error) {
+            if ($error->getCode() !== '42S21' && (int) ($error->errorInfo[1] ?? 0) !== 1060) {
+                throw $error;
+            }
+        }
+    }
+}
+
+function ensure_password_reset_table(PDO $pdo): void
+{
+    $pdo->exec(
+        'CREATE TABLE IF NOT EXISTS password_reset_tokens (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            user_id BIGINT UNSIGNED NOT NULL,
+            token_hash CHAR(64) NOT NULL,
+            expires_at DATETIME NOT NULL,
+            used_at DATETIME NULL,
+            created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            KEY idx_password_reset_user (user_id, expires_at),
+            UNIQUE KEY uq_password_reset_hash (token_hash),
+            CONSTRAINT fk_password_reset_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4'
+    );
+}
+
+function can_send_password_reset(array $config): bool
+{
+    $appUrl = $config['app_url'] ?? '';
+    $mailFrom = $config['mail_from'] ?? '';
+    if (!is_string($appUrl) || !is_string($mailFrom)
+        || filter_var($appUrl, FILTER_VALIDATE_URL) === false
+        || filter_var($mailFrom, FILTER_VALIDATE_EMAIL) === false) {
+        return false;
+    }
+
+    $parts = parse_url($appUrl);
+    if (!is_array($parts) || !isset($parts['scheme'], $parts['host'])
+        || isset($parts['user']) || isset($parts['pass'])
+        || isset($parts['query']) || isset($parts['fragment'])) {
+        return false;
+    }
+
+    $scheme = strtolower($parts['scheme']);
+    $host = strtolower($parts['host']);
+    return $scheme === 'https' || ($scheme === 'http' && in_array($host, ['localhost', '127.0.0.1'], true));
+}
+
+function issue_password_reset(PDO $pdo, array $config, int $userId, string $email, string $name): void
+{
+    if (!can_send_password_reset($config)) {
+        throw new RuntimeException('Configure app_url and mail_from in the private API configuration before sending reset emails.');
+    }
+
+    $token = bin2hex(random_bytes(32));
+    $tokenHash = hash('sha256', $token);
+    $pdo->prepare('UPDATE password_reset_tokens SET used_at = CURRENT_TIMESTAMP WHERE user_id = ? AND used_at IS NULL')
+        ->execute([$userId]);
+    $pdo->prepare('INSERT INTO password_reset_tokens (user_id, token_hash, expires_at) VALUES (?, ?, DATE_ADD(UTC_TIMESTAMP(), INTERVAL 1 HOUR))')
+        ->execute([$userId, $tokenHash]);
+
+    $resetUrl = rtrim($config['app_url'], '/') . '/?resetToken=' . rawurlencode($token);
+    $subject = 'Reset your Is It Too Spicy? password';
+    $message = "Hello {$name},\n\nUse the link below to set a new password. This link expires in one hour and can only be used once.\n\n{$resetUrl}\n\nIf you did not request this, you can ignore this email.\n";
+    $headers = [
+        'From' => $config['mail_from'],
+        'Content-Type' => 'text/plain; charset=UTF-8',
+        'X-Mailer' => 'Is It Too Spicy',
+    ];
+    if (!mail($email, $subject, $message, $headers)) {
+        $pdo->prepare('DELETE FROM password_reset_tokens WHERE token_hash = ?')->execute([$tokenHash]);
+        throw new RuntimeException('The password reset email could not be sent. Check the server mail configuration.');
+    }
+}
+
 function query_string(string $key): string
 {
     $value = $_GET[$key] ?? '';
@@ -104,15 +223,20 @@ function authenticated_user(string $secret, PDO $pdo): array
         respond(401, ['error' => 'Your session has expired. Please sign in again.']);
     }
 
-    $stmt = $pdo->prepare('SELECT id, name, username, email, role, avatar_url AS avatarUrl, created_at AS createdAt FROM users WHERE id = ?');
+    ensure_user_active_column($pdo);
+    $stmt = $pdo->prepare('SELECT id, name, username, email, role, avatar_url AS avatarUrl, created_at AS createdAt, is_active AS isActive FROM users WHERE id = ?');
     $stmt->execute([(int) $payload['id']]);
     $user = $stmt->fetch();
 
     if (!$user) {
         respond(401, ['error' => 'Account not found.']);
     }
+    if (!(bool) $user['isActive']) {
+        respond(403, ['error' => 'This account has been deactivated. Contact an administrator for help.']);
+    }
 
     $user['id'] = (int) $user['id'];
+    $user['isActive'] = (bool) $user['isActive'];
     return $user;
 }
 
@@ -130,6 +254,7 @@ function ensure_title_metadata_columns(PDO $pdo): void
         'genres' => 'TEXT NULL',
         'tropes' => 'TEXT NULL',
         'tags' => 'TEXT NULL',
+        'series' => 'VARCHAR(200) NULL',
     ];
     $check = $pdo->prepare(
         'SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
@@ -641,9 +766,18 @@ function fetch_public_related_media(string $type, string $kind, string $query): 
 }
 
 try {
-    $configFile = dirname(__DIR__, 2) . DIRECTORY_SEPARATOR . 'config.php';
-    if (!file_exists($configFile)) {
-        throw new RuntimeException('Configuration file config.php not found.');
+    $webRootConfigFile = dirname(__DIR__) . DIRECTORY_SEPARATOR . 'config.php';
+    $localConfigFile = __DIR__ . DIRECTORY_SEPARATOR . 'config.php';
+    $parentConfigFile = dirname(__DIR__, 2) . DIRECTORY_SEPARATOR . 'config.php';
+    $configFile = null;
+    foreach ([$webRootConfigFile, $localConfigFile, $parentConfigFile] as $candidate) {
+        if (is_file($candidate) && is_readable($candidate)) {
+            $configFile = $candidate;
+            break;
+        }
+    }
+    if ($configFile === null) {
+        throw new RuntimeException('Configuration file config.php not found in the web root, api directory, or private parent directory.');
     }
 
     $config = require $configFile;
@@ -908,7 +1042,9 @@ try {
             'image'        => 'cover_url',
             'description'  => 'description',
             'synopsis'     => 'description',
-            'summary'      => 'description'
+            'summary'      => 'description',
+            'series'       => 'series',
+            'book_series'  => 'series'
         ];
 
         $missingColumns = [];
@@ -1082,7 +1218,9 @@ try {
             'image'        => 'cover_url',
             'description'  => 'description',
             'synopsis'     => 'description',
-            'summary'      => 'description'
+            'summary'      => 'description',
+            'series'       => 'series',
+            'book_series'  => 'series'
         ];
 
         $insertedCount = 0;
@@ -1184,6 +1322,7 @@ try {
 
     // --- Auth Routes ---
     if ($method === 'POST' && $route === '/auth/register') {
+        ensure_user_active_column($pdo);
         $name = trim(body_string($body, 'name'));
         $username = trim(body_string($body, 'username')) ?: null;
         $email = strtolower(trim(body_string($body, 'email')));
@@ -1210,7 +1349,7 @@ try {
 
         try {
             $passwordHash = password_hash($password, PASSWORD_BCRYPT, ['cost' => 12]);
-            $statement = $pdo->prepare('INSERT INTO users (name, username, email, password_hash, role) VALUES (?, ?, ?, ?, "member")');
+            $statement = $pdo->prepare('INSERT INTO users (name, username, email, password_hash, role, is_active) VALUES (?, ?, ?, ?, "member", 1)');
             $statement->execute([$name, $username, $email, $passwordHash]);
         } catch (PDOException $error) {
             if ($error->getCode() === '23000' && (int) ($error->errorInfo[1] ?? 0) === 1062) {
@@ -1224,13 +1363,14 @@ try {
     }
 
     if ($method === 'POST' && $route === '/auth/login') {
+        ensure_user_active_column($pdo);
         $email = strtolower(trim(body_string($body, 'email')));
         $password = body_string($body, 'password');
-        $statement = $pdo->prepare('SELECT id, name, username, email, password_hash, role, avatar_url AS avatarUrl FROM users WHERE email = ?');
+        $statement = $pdo->prepare('SELECT id, name, username, email, password_hash, role, avatar_url AS avatarUrl, is_active FROM users WHERE email = ?');
         $statement->execute([$email]);
         $row = $statement->fetch();
 
-        if (!$row || !password_verify($password, $row['password_hash'])) {
+        if (!$row || !password_verify($password, $row['password_hash']) || !(bool) $row['is_active']) {
             respond(401, ['error' => 'Email or password is incorrect.']);
         }
 
@@ -1238,9 +1378,92 @@ try {
         respond(200, ['user' => $user, 'token' => create_token($user, $config['jwt_secret'])]);
     }
 
+    if ($method === 'POST' && $route === '/auth/forgot-password') {
+        $email = strtolower(trim(body_string($body, 'email')));
+        if (!can_send_password_reset($config)) {
+            respond(503, ['error' => 'Password reset email is not configured. Please contact an administrator.']);
+        }
+
+        ensure_user_active_column($pdo);
+        $statement = $pdo->prepare('SELECT id, name FROM users WHERE email = ? AND is_active = 1');
+        $statement->execute([$email]);
+        $target = $statement->fetch();
+        if ($target) {
+            try {
+                ensure_password_reset_table($pdo);
+                issue_password_reset($pdo, $config, (int) $target['id'], $email, $target['name']);
+            } catch (Throwable $error) {
+                error_log('Password reset email failed: ' . $error->getMessage());
+            }
+        }
+        respond(200, ['message' => 'If an active account uses that email, a password reset link has been sent.']);
+    }
+
+    if ($method === 'POST' && $route === '/auth/reset-password') {
+        $token = trim(body_string($body, 'token'));
+        $password = body_string($body, 'password');
+        if (strlen($token) !== 64 || !ctype_xdigit($token)) {
+            respond(400, ['error' => 'This password reset link is invalid or expired. Request a new link.']);
+        }
+        if (text_length($password) < 8 || strlen($password) > 72) {
+            respond(400, ['error' => 'Password must be between 8 and 72 characters.']);
+        }
+
+        ensure_user_active_column($pdo);
+        ensure_password_reset_table($pdo);
+        $pdo->beginTransaction();
+        try {
+            $statement = $pdo->prepare(
+                'SELECT t.id, t.user_id
+                 FROM password_reset_tokens t
+                 JOIN users u ON u.id = t.user_id
+                 WHERE t.token_hash = ? AND t.used_at IS NULL
+                   AND t.expires_at > UTC_TIMESTAMP() AND u.is_active = 1
+                 FOR UPDATE'
+            );
+            $statement->execute([hash('sha256', $token)]);
+            $reset = $statement->fetch();
+            if (!$reset) {
+                $pdo->rollBack();
+                respond(400, ['error' => 'This password reset link is invalid or expired. Request a new link.']);
+            }
+
+            $passwordHash = password_hash($password, PASSWORD_BCRYPT, ['cost' => 12]);
+            $pdo->prepare('UPDATE users SET password_hash = ? WHERE id = ?')->execute([$passwordHash, $reset['user_id']]);
+            $pdo->prepare('UPDATE password_reset_tokens SET used_at = CURRENT_TIMESTAMP WHERE user_id = ? AND used_at IS NULL')
+                ->execute([$reset['user_id']]);
+            $pdo->commit();
+        } catch (Throwable $error) {
+            if ($pdo->inTransaction()) $pdo->rollBack();
+            throw $error;
+        }
+        respond(200, ['message' => 'Password reset successfully. You can now sign in.']);
+    }
+
     if ($method === 'GET' && $route === '/auth/me') {
         $user = authenticated_user($config['jwt_secret'], $pdo);
         respond(200, ['user' => $user]);
+    }
+
+    if ($method === 'POST' && $route === '/auth/change-password') {
+        $user = authenticated_user($config['jwt_secret'], $pdo);
+        $currentPassword = body_string($body, 'currentPassword');
+        $newPassword = body_string($body, 'newPassword');
+
+        if (text_length($newPassword) < 8 || strlen($newPassword) > 72) {
+            respond(400, ['error' => 'New password must be between 8 and 72 characters.']);
+        }
+
+        $statement = $pdo->prepare('SELECT password_hash FROM users WHERE id = ?');
+        $statement->execute([$user['id']]);
+        $passwordHash = $statement->fetchColumn();
+        if (!is_string($passwordHash) || !password_verify($currentPassword, $passwordHash)) {
+            respond(401, ['error' => 'Current password is incorrect.']);
+        }
+
+        $newHash = password_hash($newPassword, PASSWORD_BCRYPT, ['cost' => 12]);
+        $pdo->prepare('UPDATE users SET password_hash = ? WHERE id = ?')->execute([$newHash, $user['id']]);
+        respond(200, ['message' => 'Password updated.']);
     }
 
     if ($method === 'PUT' && $route === '/users/me') {
@@ -1271,6 +1494,7 @@ try {
 
     // --- Public Community Users Directory ---
     if ($method === 'GET' && $route === '/users') {
+        ensure_user_active_column($pdo);
         $stmt = $pdo->query(
             'SELECT 
                 u.id, 
@@ -1284,6 +1508,7 @@ try {
              FROM users u
              LEFT JOIN user_libraries ul ON ul.user_id = u.id
              LEFT JOIN reviews r ON r.user_id = u.id
+             WHERE u.is_active = 1
              GROUP BY u.id, u.name, u.username, u.role, u.avatar_url, u.created_at
              ORDER BY libraryCount DESC, u.created_at DESC
              LIMIT 100'
@@ -1299,6 +1524,123 @@ try {
     }
 
     // --- Admin Role Management ---
+    if ($method === 'GET' && $route === '/admin/users') {
+        $admin = authenticated_user($config['jwt_secret'], $pdo);
+        require_role($admin, ['admin']);
+        ensure_user_active_column($pdo);
+        $query = truncate_text(query_string('q'), 120);
+        $offsetInput = filter_var($_GET['offset'] ?? 0, FILTER_VALIDATE_INT);
+        $offset = $offsetInput !== false ? max(0, $offsetInput) : 0;
+        $where = '';
+        $values = [];
+        if ($query !== '') {
+            $where = 'WHERE u.name LIKE ? OR u.username LIKE ? OR u.email LIKE ?';
+            $like = '%' . $query . '%';
+            $values = [$like, $like, $like];
+        }
+        $count = $pdo->prepare("SELECT COUNT(*) FROM users u $where");
+        $count->execute($values);
+        $total = (int) $count->fetchColumn();
+        $usersStatement = $pdo->prepare(
+            "SELECT u.id, u.name, u.username, u.email, u.role,
+                    u.is_active AS isActive, u.created_at AS createdAt,
+                    (SELECT COUNT(*) FROM reviews r WHERE r.user_id = u.id) AS reviewCount,
+                    (SELECT COUNT(*) FROM community_posts p WHERE p.user_id = u.id) AS postCount
+             FROM users u
+             $where
+             ORDER BY u.created_at DESC
+             LIMIT 100 OFFSET $offset"
+        );
+        $usersStatement->execute($values);
+        $users = $usersStatement->fetchAll();
+        foreach ($users as &$listedUser) {
+            $listedUser['id'] = (int) $listedUser['id'];
+            $listedUser['isActive'] = (bool) $listedUser['isActive'];
+            $listedUser['reviewCount'] = (int) $listedUser['reviewCount'];
+            $listedUser['postCount'] = (int) $listedUser['postCount'];
+        }
+        unset($listedUser);
+        respond(200, ['users' => $users, 'total' => $total, 'hasMore' => $offset + count($users) < $total]);
+    }
+
+    if ($method === 'POST' && $route === '/admin/users') {
+        $admin = authenticated_user($config['jwt_secret'], $pdo);
+        require_role($admin, ['admin']);
+        ensure_user_active_column($pdo);
+        $name = trim(body_string($body, 'name'));
+        $email = strtolower(trim(body_string($body, 'email')));
+        if (text_length($name) < 2 || text_length($name) > 80) {
+            respond(400, ['error' => 'Name must be between 2 and 80 characters.']);
+        }
+        if (!preg_match('/^[^\s@]+@[^\s@]+\.[^\s@]+$/', $email) || strlen($email) > 254) {
+            respond(400, ['error' => 'Enter a valid email address.']);
+        }
+        if (!can_send_password_reset($config)) {
+            respond(503, ['error' => 'Configure password reset email before inviting users.']);
+        }
+
+        ensure_password_reset_table($pdo);
+        $pdo->beginTransaction();
+        try {
+            $temporaryPassword = bin2hex(random_bytes(24));
+            $insert = $pdo->prepare('INSERT INTO users (name, email, password_hash, role, is_active) VALUES (?, ?, ?, "member", 1)');
+            $insert->execute([$name, $email, password_hash($temporaryPassword, PASSWORD_BCRYPT, ['cost' => 12])]);
+            $newUserId = (int) $pdo->lastInsertId();
+            issue_password_reset($pdo, $config, $newUserId, $email, $name);
+            $pdo->commit();
+        } catch (PDOException $error) {
+            if ($pdo->inTransaction()) $pdo->rollBack();
+            if ($error->getCode() === '23000' && (int) ($error->errorInfo[1] ?? 0) === 1062) {
+                respond(409, ['error' => 'An account with that email already exists.']);
+            }
+            throw $error;
+        } catch (Throwable $error) {
+            if ($pdo->inTransaction()) $pdo->rollBack();
+            respond(503, ['error' => $error->getMessage()]);
+        }
+        respond(201, ['message' => 'User created and password setup email sent.', 'userId' => $newUserId]);
+    }
+
+    if ($method === 'POST' && preg_match('#^/admin/users/([0-9]+)/password-reset$#', $route, $matches)) {
+        $admin = authenticated_user($config['jwt_secret'], $pdo);
+        require_role($admin, ['admin']);
+        $userId = (int) $matches[1];
+        $targetStatement = $pdo->prepare('SELECT name, email FROM users WHERE id = ? AND is_active = 1');
+        $targetStatement->execute([$userId]);
+        $target = $targetStatement->fetch();
+        if (!$target) respond(404, ['error' => 'Active user not found.']);
+        try {
+            ensure_password_reset_table($pdo);
+            issue_password_reset($pdo, $config, $userId, $target['email'], $target['name']);
+        } catch (Throwable $error) {
+            error_log('Admin password reset email failed: ' . $error->getMessage());
+            respond(503, ['error' => $error->getMessage()]);
+        }
+        respond(200, ['message' => 'Password reset email sent.']);
+    }
+
+    if ($method === 'PATCH' && preg_match('#^/admin/users/([0-9]+)/status$#', $route, $matches)) {
+        $admin = authenticated_user($config['jwt_secret'], $pdo);
+        require_role($admin, ['admin']);
+        ensure_user_active_column($pdo);
+        $userId = (int) $matches[1];
+        $isActive = $body['isActive'] ?? null;
+        if (!is_bool($isActive)) respond(400, ['error' => 'isActive must be true or false.']);
+        if (!$isActive && $userId === (int) $admin['id']) {
+            respond(409, ['error' => 'You cannot deactivate your own account.']);
+        }
+        $targetStatement = $pdo->prepare('SELECT role, is_active FROM users WHERE id = ?');
+        $targetStatement->execute([$userId]);
+        $target = $targetStatement->fetch();
+        if (!$target) respond(404, ['error' => 'User not found.']);
+        if (!$isActive && $target['role'] === 'admin' && (bool) $target['is_active']) {
+            $activeAdmins = (int) $pdo->query('SELECT COUNT(*) FROM users WHERE role = "admin" AND is_active = 1')->fetchColumn();
+            if ($activeAdmins <= 1) respond(409, ['error' => 'The last active administrator cannot be deactivated.']);
+        }
+        $pdo->prepare('UPDATE users SET is_active = ? WHERE id = ?')->execute([$isActive ? 1 : 0, $userId]);
+        respond(200, ['message' => $isActive ? 'User reactivated.' : 'User deactivated.', 'isActive' => $isActive]);
+    }
+
     if ($method === 'PATCH' && preg_match('#^/admin/users/([0-9]+)/role$#', $route, $matches)) {
         $admin = authenticated_user($config['jwt_secret'], $pdo);
         require_role($admin, ['admin']);
@@ -1308,6 +1650,16 @@ try {
 
         if (!in_array($newRole, ['admin', 'moderator', 'member'], true)) {
             respond(400, ['error' => 'Invalid role specified. Use admin, moderator, or member.']);
+        }
+
+        ensure_user_active_column($pdo);
+        $targetStatement = $pdo->prepare('SELECT role, is_active FROM users WHERE id = ?');
+        $targetStatement->execute([$targetUserId]);
+        $target = $targetStatement->fetch();
+        if (!$target) respond(404, ['error' => 'User not found.']);
+        if ($target['role'] === 'admin' && $newRole !== 'admin' && (bool) $target['is_active']) {
+            $activeAdmins = (int) $pdo->query('SELECT COUNT(*) FROM users WHERE role = "admin" AND is_active = 1')->fetchColumn();
+            if ($activeAdmins <= 1) respond(409, ['error' => 'The last active administrator cannot be demoted.']);
         }
 
         $statement = $pdo->prepare('UPDATE users SET role = ? WHERE id = ?');
@@ -1347,6 +1699,7 @@ try {
             'genres' => 'genres',
             'tropes' => 'tropes',
             'tags' => 'tags',
+            'series' => 'series',
         ];
         $updates = [];
         $values = [];
@@ -1379,6 +1732,7 @@ try {
                     'creator' => 200,
                     'coverUrl' => 2048,
                     'description' => 1500,
+                    'series' => 200,
                     default => 10000,
                 };
                 if (text_length($normalized) > $maxLength) {
@@ -1394,7 +1748,7 @@ try {
             $values[] = $normalized;
         }
 
-        if (array_intersect(['catalogRating', 'genres', 'tropes', 'tags'], array_keys($fields))) {
+        if (array_intersect(['catalogRating', 'genres', 'tropes', 'tags', 'series'], array_keys($fields))) {
             ensure_title_metadata_columns($pdo);
         }
 
@@ -1411,6 +1765,132 @@ try {
         ]);
     }
 
+    if ($method === 'GET' && preg_match('#^/titles/([0-9]+)/related$#', $route, $matches)) {
+        $titleId = (int) $matches[1];
+        $catalogRatingColumn = title_metadata_column_exists($pdo, 'catalog_rating') ? 't.catalog_rating' : 'NULL';
+        $genresColumn = title_metadata_column_exists($pdo, 'genres') ? 't.genres' : 'NULL';
+        $tropesColumn = title_metadata_column_exists($pdo, 'tropes') ? 't.tropes' : 'NULL';
+        $tagsColumn = title_metadata_column_exists($pdo, 'tags') ? 't.tags' : 'NULL';
+        $seriesColumn = title_metadata_column_exists($pdo, 'series') ? 't.series' : 'NULL';
+        $titleStatement = $pdo->prepare(
+            "SELECT t.id, t.title, t.kind, t.creator, t.isbn, t.barcode,
+                    t.release_year AS releaseYear, t.cover_url AS coverUrl, t.description,
+                    {$catalogRatingColumn} AS catalogRating, {$genresColumn} AS genres,
+                    {$tropesColumn} AS tropes, {$tagsColumn} AS tags, {$seriesColumn} AS series,
+                    COALESCE(stats.reviewCount, 0) AS reviewCount,
+                    stats.averageSpice, stats.averageRating
+             FROM titles t
+             LEFT JOIN (
+                SELECT title_id, COUNT(*) AS reviewCount,
+                       ROUND(AVG(spice_level), 1) AS averageSpice,
+                       ROUND(AVG(rating), 1) AS averageRating
+                FROM reviews
+                GROUP BY title_id
+             ) stats ON stats.title_id = t.id
+             WHERE t.id = ?"
+        );
+        $titleStatement->execute([$titleId]);
+        $title = $titleStatement->fetch();
+        if (!$title) respond(404, ['error' => 'Title not found.']);
+
+        $title['id'] = (int) $title['id'];
+        $title['releaseYear'] = $title['releaseYear'] !== null ? (int) $title['releaseYear'] : null;
+        $title['catalogRating'] = $title['catalogRating'] !== null ? (float) $title['catalogRating'] : null;
+        $title['reviewCount'] = (int) $title['reviewCount'];
+        $title['averageSpice'] = $title['averageSpice'] !== null ? (float) $title['averageSpice'] : null;
+        $title['averageRating'] = $title['averageRating'] !== null ? (float) $title['averageRating'] : null;
+
+        $viewerStatus = null;
+        if (request_authorization_header() !== '') {
+            $viewer = authenticated_user($config['jwt_secret'], $pdo);
+            $statusStatement = $pdo->prepare('SELECT status FROM user_libraries WHERE user_id = ? AND title_id = ?');
+            $statusStatement->execute([$viewer['id'], $titleId]);
+            $viewerStatus = $statusStatement->fetchColumn();
+            if ($viewerStatus === false) $viewerStatus = null;
+        }
+
+        $seriesName = is_string($title['series']) ? trim($title['series']) : '';
+        $creator = is_string($title['creator']) ? trim($title['creator']) : '';
+        $genres = metadata_tokens(is_string($title['genres']) ? $title['genres'] : null);
+        $tropes = metadata_tokens(is_string($title['tropes']) ? $title['tropes'] : null);
+        $conditions = [];
+        $relatedValues = [$titleId, $title['kind']];
+
+        if ($seriesName !== '' && $seriesColumn !== 'NULL') {
+            $conditions[] = 'LOWER(TRIM(' . $seriesColumn . ')) = LOWER(TRIM(?))';
+            $relatedValues[] = $seriesName;
+        }
+        if ($creator !== '') {
+            $conditions[] = 'LOWER(TRIM(t.creator)) = LOWER(TRIM(?))';
+            $relatedValues[] = $creator;
+        }
+        foreach ($genres as $genre) {
+            $conditions[] = "FIND_IN_SET(?, REPLACE(LOWER(COALESCE({$genresColumn}, '')), ' ', '')) > 0";
+            $relatedValues[] = $genre;
+        }
+        foreach ($tropes as $trope) {
+            $conditions[] = "FIND_IN_SET(?, REPLACE(LOWER(COALESCE({$tropesColumn}, '')), ' ', '')) > 0";
+            $relatedValues[] = $trope;
+        }
+
+        $related = [];
+        if ($conditions !== []) {
+            $relatedStatement = $pdo->prepare(
+                "SELECT t.id, t.title, t.kind, t.creator, t.release_year AS releaseYear,
+                        t.cover_url AS coverUrl, t.description, {$genresColumn} AS genres,
+                        {$tropesColumn} AS tropes, {$seriesColumn} AS series,
+                        COALESCE(stats.reviewCount, 0) AS reviewCount,
+                        stats.averageSpice, stats.averageRating
+                 FROM titles t
+                 LEFT JOIN (
+                    SELECT title_id, COUNT(*) AS reviewCount,
+                           ROUND(AVG(spice_level), 1) AS averageSpice,
+                           ROUND(AVG(rating), 1) AS averageRating
+                    FROM reviews
+                    GROUP BY title_id
+                 ) stats ON stats.title_id = t.id
+                 WHERE t.id <> ? AND t.kind = ? AND (" . implode(' OR ', $conditions) . ')
+                 LIMIT 200'
+            );
+            $relatedStatement->execute($relatedValues);
+            $related = $relatedStatement->fetchAll();
+
+            foreach ($related as &$candidate) {
+                $candidateGenres = metadata_tokens(is_string($candidate['genres']) ? $candidate['genres'] : null);
+                $candidateTropes = metadata_tokens(is_string($candidate['tropes']) ? $candidate['tropes'] : null);
+                $sameSeries = $seriesName !== '' && is_string($candidate['series'])
+                    && strcasecmp(trim($candidate['series']), $seriesName) === 0;
+                $sameAuthor = $creator !== '' && is_string($candidate['creator'])
+                    && strcasecmp(trim($candidate['creator']), $creator) === 0;
+                $sharedGenres = array_values(array_intersect($genres, $candidateGenres));
+                $sharedTropes = array_values(array_intersect($tropes, $candidateTropes));
+                $candidate['matchScore'] = ($sameSeries ? 1000 : 0)
+                    + ($sameAuthor ? 100 : 0)
+                    + count($sharedGenres) * 15
+                    + count($sharedTropes) * 20;
+                $reasons = [];
+                if ($sameSeries) $reasons[] = 'Same series';
+                if ($sameAuthor) $reasons[] = 'More by this author';
+                if ($sharedGenres !== []) $reasons[] = 'Genre: ' . implode(', ', $sharedGenres);
+                if ($sharedTropes !== []) $reasons[] = 'Trope: ' . implode(', ', $sharedTropes);
+                $candidate['matchReason'] = implode(' · ', $reasons);
+                $candidate['id'] = (int) $candidate['id'];
+                $candidate['releaseYear'] = $candidate['releaseYear'] !== null ? (int) $candidate['releaseYear'] : null;
+                $candidate['reviewCount'] = (int) $candidate['reviewCount'];
+                $candidate['averageSpice'] = $candidate['averageSpice'] !== null ? (float) $candidate['averageSpice'] : null;
+                $candidate['averageRating'] = $candidate['averageRating'] !== null ? (float) $candidate['averageRating'] : null;
+            }
+            unset($candidate);
+            usort($related, static function (array $a, array $b): int {
+                $scoreComparison = $b['matchScore'] <=> $a['matchScore'];
+                return $scoreComparison !== 0 ? $scoreComparison : strcasecmp($a['title'], $b['title']);
+            });
+            $related = array_slice($related, 0, 40);
+        }
+
+        respond(200, ['title' => $title, 'viewerStatus' => $viewerStatus, 'related' => $related]);
+    }
+
     if ($method === 'GET' && $route === '/titles') {
         $rawQuery = query_string('q');
         $query = truncate_text($rawQuery, 120);
@@ -1418,6 +1898,10 @@ try {
         $minSpice = query_string('minSpice');
         $maxSpice = query_string('maxSpice');
         $needsInfo = query_string('needsInfo');
+        $offsetInput = filter_var($_GET['offset'] ?? 0, FILTER_VALIDATE_INT);
+        $limitInput = filter_var($_GET['limit'] ?? 60, FILTER_VALIDATE_INT);
+        $offset = $offsetInput !== false ? max(0, $offsetInput) : 0;
+        $limit = $limitInput !== false ? min(200, max(1, $limitInput)) : 60;
         if ($needsInfo === '1') {
             $admin = authenticated_user($config['jwt_secret'], $pdo);
             require_role($admin, ['admin']);
@@ -1430,6 +1914,7 @@ try {
         $genresColumn = title_metadata_column_exists($pdo, 'genres') ? 't.genres' : 'NULL';
         $tropesColumn = title_metadata_column_exists($pdo, 'tropes') ? 't.tropes' : 'NULL';
         $tagsColumn = title_metadata_column_exists($pdo, 'tags') ? 't.tags' : 'NULL';
+        $seriesColumn = title_metadata_column_exists($pdo, 'series') ? 't.series' : 'NULL';
 
         $conditions = [];
         $values = [];
@@ -1461,6 +1946,19 @@ try {
         }
 
         $where = $conditions ? 'WHERE ' . implode(' AND ', $conditions) : '';
+        $countStatement = $pdo->prepare(
+            "SELECT COUNT(*)
+             FROM titles t
+             LEFT JOIN (
+                SELECT title_id, ROUND(AVG(spice_level), 1) AS averageSpice
+                FROM reviews
+                GROUP BY title_id
+             ) stats ON stats.title_id = t.id
+             $where"
+        );
+        $countStatement->execute($values);
+        $total = (int) $countStatement->fetchColumn();
+
         $order = '';
         if ($query !== '') {
             $order = 'CASE WHEN t.title = ? THEN 0 WHEN t.title LIKE ? THEN 1 ELSE 2 END, ';
@@ -1481,6 +1979,7 @@ try {
                     {$genresColumn} AS genres,
                     {$tropesColumn} AS tropes,
                     {$tagsColumn} AS tags,
+                    {$seriesColumn} AS series,
                     COALESCE(stats.reviewCount, 0) AS reviewCount,
                     stats.averageSpice AS averageSpice,
                     stats.averageRating AS averageRating
@@ -1496,7 +1995,7 @@ try {
                 ) stats ON stats.title_id = t.id
                 $where
                 ORDER BY $order t.created_at DESC
-                " . ($needsInfo === '1' ? '' : 'LIMIT 60');
+                " . ($needsInfo === '1' ? '' : 'LIMIT ' . $limit . ' OFFSET ' . $offset);
 
         $statement = $pdo->prepare($sql);
         $statement->execute($values);
@@ -1512,7 +2011,7 @@ try {
         }
         unset($item);
 
-        respond(200, ['titles' => $rows]);
+        respond(200, ['titles' => $rows, 'total' => $total, 'hasMore' => $needsInfo !== '1' && $offset + count($rows) < $total]);
     }
 
     // --- Title Reviews ---
@@ -1550,6 +2049,7 @@ try {
         $releaseYear = $releaseInput !== '' ? filter_var($releaseInput, FILTER_VALIDATE_INT) : null;
         $coverUrl = trim(body_string($body, 'coverUrl')) ?: null;
         $description = trim(body_string($body, 'description')) ?: null;
+        $series = trim(body_string($body, 'series')) ?: null;
 
         if ($title === '' || text_length($title) > 200) {
             respond(400, ['error' => 'Title is required and must be 200 characters or fewer.']);
@@ -1572,17 +2072,21 @@ try {
         if ($description !== null && text_length($description) > 1500) {
             respond(400, ['error' => 'Description must be 1,500 characters or fewer.']);
         }
+        if ($series !== null && text_length($series) > 200) {
+            respond(400, ['error' => 'Series must be 200 characters or fewer.']);
+        }
         if ($coverUrl !== null && (!preg_match('/^https?:\/\//i', $coverUrl) || text_length($coverUrl) > 2048)) {
             respond(400, ['error' => 'Cover URL must be a valid http(s) URL.']);
         }
 
+        ensure_title_metadata_columns($pdo);
         $titleId = null;
         try {
             $statement = $pdo->prepare(
-                'INSERT INTO titles (title, kind, creator, isbn, barcode, release_year, cover_url, description, created_by)
-                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
+                'INSERT INTO titles (title, kind, creator, isbn, barcode, release_year, cover_url, description, series, created_by)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
             );
-            $statement->execute([$title, $kind, $creator, $isbn, $barcode, $releaseYear, $coverUrl, $description, $user['id']]);
+            $statement->execute([$title, $kind, $creator, $isbn, $barcode, $releaseYear, $coverUrl, $description, $series, $user['id']]);
             $titleId = (int) $pdo->lastInsertId();
         } catch (PDOException $error) {
             if ($error->getCode() === '23000' && (int) ($error->errorInfo[1] ?? 0) === 1062) {
@@ -1615,6 +2119,7 @@ try {
             'releaseYear' => $releaseYear,
             'coverUrl' => $coverUrl,
             'description' => $description,
+            'series' => $series,
             'reviewCount' => 0,
             'averageSpice' => null,
             'averageRating' => null,
@@ -1644,11 +2149,12 @@ try {
             }
             $metadataFields['catalog_rating'] = $catalogRating;
         }
-        foreach (['genres', 'tropes', 'tags'] as $field) {
+        foreach (['genres', 'tropes', 'tags', 'series'] as $field) {
             if (array_key_exists($field, $body)) {
                 $value = trim(body_string($body, $field)) ?: null;
-                if ($value !== null && text_length($value) > 10000) {
-                    respond(400, ucfirst($field) . ' must be 10,000 characters or fewer.');
+                $maxLength = $field === 'series' ? 200 : 10000;
+                if ($value !== null && text_length($value) > $maxLength) {
+                    respond(400, ucfirst($field) . " must be {$maxLength} characters or fewer.");
                 }
                 $metadataFields[$field] = $value;
             }
@@ -1714,11 +2220,21 @@ try {
                 t.release_year AS releaseYear,
                 t.cover_url AS coverUrl,
                 t.description,
+                COALESCE(stats.reviewCount, 0) AS reviewCount,
+                stats.averageSpice,
+                stats.averageRating,
                 r.rating AS userRating,
                 r.spice_level AS userSpice
              FROM user_libraries ul
              JOIN titles t ON t.id = ul.title_id
              LEFT JOIN reviews r ON r.title_id = t.id AND r.user_id = ul.user_id
+             LEFT JOIN (
+                SELECT title_id, COUNT(*) AS reviewCount,
+                       ROUND(AVG(spice_level), 1) AS averageSpice,
+                       ROUND(AVG(rating), 1) AS averageRating
+                FROM reviews
+                GROUP BY title_id
+             ) stats ON stats.title_id = t.id
              WHERE ul.user_id = ?
              ORDER BY ul.created_at DESC'
         );
@@ -1729,6 +2245,9 @@ try {
             $entry['libraryEntryId'] = (int) $entry['libraryEntryId'];
             $entry['titleId'] = (int) $entry['titleId'];
             $entry['releaseYear'] = $entry['releaseYear'] !== null ? (int) $entry['releaseYear'] : null;
+            $entry['reviewCount'] = (int) $entry['reviewCount'];
+            $entry['averageSpice'] = $entry['averageSpice'] !== null ? (float) $entry['averageSpice'] : null;
+            $entry['averageRating'] = $entry['averageRating'] !== null ? (float) $entry['averageRating'] : null;
             $entry['userRating'] = $entry['userRating'] !== null ? (int) $entry['userRating'] : null;
             $entry['userSpice'] = $entry['userSpice'] !== null ? (int) $entry['userSpice'] : null;
         }
@@ -1870,6 +2389,7 @@ try {
 
     // --- Community Lounge & Recommendations Feed ---
     if ($method === 'GET' && $route === '/community/posts') {
+        ensure_community_lock_column($pdo);
         $category = query_string('category');
         $where = '';
         $params = [];
@@ -1885,6 +2405,7 @@ try {
                 p.topic,
                 p.body,
                 p.likes_count AS likesCount,
+                p.is_locked AS isLocked,
                 p.created_at AS createdAt,
                 u.id AS authorId,
                 u.name AS authorName,
@@ -1930,6 +2451,7 @@ try {
             $post['id'] = (int) $post['id'];
             $post['authorId'] = (int) $post['authorId'];
             $post['likesCount'] = (int) $post['likesCount'];
+            $post['isLocked'] = (bool) $post['isLocked'];
             $post['linkedTitleId'] = $post['linkedTitleId'] !== null ? (int) $post['linkedTitleId'] : null;
             $post['comments'] = $commentsByPost[$post['id']] ?? [];
         }
@@ -1939,6 +2461,7 @@ try {
     }
 
     if ($method === 'POST' && $route === '/community/posts') {
+        ensure_community_lock_column($pdo);
         $user = authenticated_user($config['jwt_secret'], $pdo);
         $category = body_string($body, 'category') ?: 'general';
         $topic = trim(body_string($body, 'topic'));
@@ -1973,10 +2496,116 @@ try {
             respond(400, ['error' => 'Comment must be between 1 and 1,500 characters.']);
         }
 
-        $stmt = $pdo->prepare('INSERT INTO community_comments (post_id, user_id, body) VALUES (?, ?, ?)');
-        $stmt->execute([$postId, $user['id'], $content]);
+        ensure_community_lock_column($pdo);
+        $pdo->beginTransaction();
+        try {
+            $postStatement = $pdo->prepare('SELECT is_locked FROM community_posts WHERE id = ? FOR UPDATE');
+            $postStatement->execute([$postId]);
+            $post = $postStatement->fetch();
+            if (!$post) {
+                $pdo->rollBack();
+                respond(404, ['error' => 'Post not found.']);
+            }
+            if ((bool) $post['is_locked']) {
+                $pdo->rollBack();
+                respond(423, ['error' => 'This post is locked and no longer accepts replies.']);
+            }
 
+            $stmt = $pdo->prepare('INSERT INTO community_comments (post_id, user_id, body) VALUES (?, ?, ?)');
+            $stmt->execute([$postId, $user['id'], $content]);
+            $pdo->commit();
+        } catch (Throwable $error) {
+            if ($pdo->inTransaction()) $pdo->rollBack();
+            throw $error;
+        }
         respond(201, ['message' => 'Reply added.']);
+    }
+
+    if ($method === 'GET' && $route === '/admin/community/posts') {
+        $admin = authenticated_user($config['jwt_secret'], $pdo);
+        require_role($admin, ['admin']);
+        ensure_community_lock_column($pdo);
+        $stmt = $pdo->query(
+            'SELECT p.id, p.category, p.topic, p.body, p.is_locked AS isLocked,
+                    p.created_at AS createdAt, u.id AS authorId, u.name AS authorName,
+                    u.email AS authorEmail,
+                    (SELECT COUNT(*) FROM community_comments c WHERE c.post_id = p.id) AS commentCount
+             FROM community_posts p
+             JOIN users u ON u.id = p.user_id
+             ORDER BY p.created_at DESC
+             LIMIT 100'
+        );
+        $posts = $stmt->fetchAll();
+        foreach ($posts as &$post) {
+            $post['id'] = (int) $post['id'];
+            $post['authorId'] = (int) $post['authorId'];
+            $post['commentCount'] = (int) $post['commentCount'];
+            $post['isLocked'] = (bool) $post['isLocked'];
+        }
+        unset($post);
+
+        $commentStatement = $pdo->query(
+            'SELECT c.id, c.post_id AS postId, c.body, c.created_at AS createdAt,
+                    u.id AS authorId, u.name AS authorName, u.email AS authorEmail
+             FROM community_comments c
+             JOIN users u ON u.id = c.user_id
+             ORDER BY c.created_at DESC
+             LIMIT 300'
+        );
+        $comments = $commentStatement->fetchAll();
+        foreach ($comments as &$comment) {
+            $comment['id'] = (int) $comment['id'];
+            $comment['postId'] = (int) $comment['postId'];
+            $comment['authorId'] = (int) $comment['authorId'];
+        }
+        unset($comment);
+        respond(200, ['posts' => $posts, 'comments' => $comments]);
+    }
+
+    if ($method === 'PATCH' && preg_match('#^/admin/community/posts/([0-9]+)/lock$#', $route, $matches)) {
+        $admin = authenticated_user($config['jwt_secret'], $pdo);
+        require_role($admin, ['admin']);
+        ensure_community_lock_column($pdo);
+        $isLocked = $body['isLocked'] ?? null;
+        if (!is_bool($isLocked)) respond(400, ['error' => 'isLocked must be true or false.']);
+        $statement = $pdo->prepare('UPDATE community_posts SET is_locked = ? WHERE id = ?');
+        $statement->execute([$isLocked ? 1 : 0, (int) $matches[1]]);
+        if ($statement->rowCount() === 0) {
+            $exists = $pdo->prepare('SELECT 1 FROM community_posts WHERE id = ?');
+            $exists->execute([(int) $matches[1]]);
+            if (!$exists->fetch()) respond(404, ['error' => 'Post not found.']);
+        }
+        respond(200, ['message' => $isLocked ? 'Post locked.' : 'Post unlocked.', 'isLocked' => $isLocked]);
+    }
+
+    if ($method === 'DELETE' && preg_match('#^/admin/community/posts/([0-9]+)$#', $route, $matches)) {
+        $admin = authenticated_user($config['jwt_secret'], $pdo);
+        require_role($admin, ['admin']);
+        $postId = (int) $matches[1];
+        $pdo->beginTransaction();
+        try {
+            $pdo->prepare('DELETE FROM community_comments WHERE post_id = ?')->execute([$postId]);
+            $statement = $pdo->prepare('DELETE FROM community_posts WHERE id = ?');
+            $statement->execute([$postId]);
+            if ($statement->rowCount() === 0) {
+                $pdo->rollBack();
+                respond(404, ['error' => 'Post not found.']);
+            }
+            $pdo->commit();
+        } catch (Throwable $error) {
+            if ($pdo->inTransaction()) $pdo->rollBack();
+            throw $error;
+        }
+        respond(200, ['message' => 'Post and its comments deleted.']);
+    }
+
+    if ($method === 'DELETE' && preg_match('#^/admin/community/comments/([0-9]+)$#', $route, $matches)) {
+        $admin = authenticated_user($config['jwt_secret'], $pdo);
+        require_role($admin, ['admin']);
+        $statement = $pdo->prepare('DELETE FROM community_comments WHERE id = ?');
+        $statement->execute([(int) $matches[1]]);
+        if ($statement->rowCount() === 0) respond(404, ['error' => 'Comment not found.']);
+        respond(200, ['message' => 'Comment deleted.']);
     }
 
     if ($method === 'POST' && preg_match('#^/community/posts/([0-9]+)/like$#', $route, $matches)) {

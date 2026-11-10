@@ -80,7 +80,6 @@ function App() {
   const [libraryLoading, setLibraryLoading] = useState(false);
   const [libraryError, setLibraryError] = useState('');
   const [libraryBusy, setLibraryBusy] = useState(false);
-  const [viewerSide, setViewerSide] = useState('front');
   const [pendingShelfItem, setPendingShelfItem] = useState(null);
   const libraryRequest = useRef(0);
 
@@ -136,9 +135,9 @@ function App() {
     }
   }, [user?.id]);
 
-  const placeOnShelf = async (item) => {
+  const placeOnShelf = async (item, status = 'planned') => {
     if (!user) {
-      setPendingShelfItem(item);
+      setPendingShelfItem({ item, status });
       setAuthMode('login');
       setModal('auth');
       return;
@@ -146,8 +145,10 @@ function App() {
     setLibraryBusy(true);
     setLibraryError('');
     try {
-      await api('/library/add', { method: 'POST', body: JSON.stringify({ titleId: item.id, status: 'completed' }) });
-      setLibraryItems((current) => current.some((entry) => String(entry.id) === String(item.id)) ? current : [{ ...item, id: item.id }, ...current]);
+      await api('/library/add', { method: 'POST', body: JSON.stringify({ titleId: item.id, status }) });
+      setLibraryItems((current) => current.some((entry) => String(entry.id) === String(item.id))
+        ? current.map((entry) => String(entry.id) === String(item.id) ? { ...entry, status } : entry)
+        : [{ ...item, id: item.id, status }, ...current]);
       showToast('Placed on your shelf.');
       await loadLibrary(user.id);
     } catch (error) {
@@ -157,12 +158,28 @@ function App() {
     }
   };
 
+  const updateShelfStatus = async (item, status) => {
+    setLibraryBusy(true);
+    setLibraryError('');
+    try {
+      await api('/library/add', { method: 'POST', body: JSON.stringify({ titleId: item.id, status }) });
+      setLibraryItems((current) => current.map((entry) => String(entry.id) === String(item.id) ? { ...entry, status } : entry));
+      showToast('Shelf status updated.');
+      return true;
+    } catch (error) {
+      setLibraryError(error.message);
+      return false;
+    } finally {
+      setLibraryBusy(false);
+    }
+  };
+
   useEffect(() => {
     if (user && pendingShelfItem) {
-      const item = pendingShelfItem;
+      const { item, status } = pendingShelfItem;
       setPendingShelfItem(null);
-      setModal('viewer');
-      placeOnShelf(item);
+      setModal('detail');
+      placeOnShelf(item, status);
     }
   }, [user?.id]);
 
@@ -181,11 +198,10 @@ function App() {
     }
   };
 
-  const openViewer = (item) => {
+  const openTitleDetails = (item) => {
     setSelected(item);
-    setViewerSide('front');
     setLibraryError('');
-    setModal('viewer');
+    setModal('detail');
   };
 
   const showToast = (message) => {
@@ -210,10 +226,12 @@ function App() {
         <nav className="top-nav" aria-label="Main navigation">
           <a className="nav-active" href="#explore">Explore</a>
           <button className="nav-shelf" onClick={() => user ? document.getElementById('my-library')?.scrollIntoView({ behavior: 'smooth' }) : (setAuthMode('login'), setModal('auth'))}>My shelf</button>
+          <button className="nav-shelf" onClick={() => user ? setModal('social') : (setAuthMode('login'), setModal('auth'))}>Friends &amp; inbox</button>
           <a href="#how-it-works">How it works</a>
           <a href="#community">Community</a>
         </nav>
         <div className="header-actions">
+          {user && <button className="button button-outline button-small social-header-button" onClick={() => setModal('social')}>Inbox</button>}
           {user ? <><span className="welcome-user">Hi, {user.name.split(' ')[0]}</span><button className="button button-outline button-small" onClick={signOut}>Sign out</button></> :
             <button className="button button-quiet" onClick={() => { setAuthMode('login'); setModal('auth'); }}>Log in</button>}
           <button className="button button-primary button-small" onClick={() => user ? setModal('add') : (setAuthMode('register'), setModal('auth'))}>
@@ -256,7 +274,7 @@ function App() {
           </div>
           {libraryLoading ? <div className="loading-state shelf-loading">Bringing your stories to the shelf…</div> :
             libraryError && !libraryItems.length ? <div className="empty-state shelf-empty"><h3>Your shelf didn’t load.</h3><p>{libraryError}</p><button className="button button-outline" onClick={() => loadLibrary(user.id)}>Try again</button></div> :
-              libraryItems.length ? <Bookshelf items={libraryItems} onOpen={openViewer} label="Your library" /> :
+              libraryItems.length ? <Bookshelf items={libraryItems} onOpen={openTitleDetails} label="Your library" /> :
                 <div className="empty-state shelf-empty"><span className="empty-spark">✳</span><h3>Your shelf is waiting.</h3><p>Pick a story from the community shelf and place it here to keep it close.</p><button className="button button-outline" onClick={() => document.getElementById('community-shelf')?.scrollIntoView({ behavior: 'smooth' })}>Explore the shelves <Icon name="arrow" size={16} /></button></div>}
         </section>}
 
@@ -272,7 +290,7 @@ function App() {
             <div className="discover-column">
               <div className="list-heading"><h3>{query ? 'Search results' : activeType === 'all' ? 'A few community favorites' : `${types.find((item) => item.id === activeType)?.label} to explore`}</h3><span>{loading ? 'Finding stories…' : `${titles.length} ${titles.length === 1 ? 'story' : 'stories'}`}</span></div>
               {loading ? <div className="loading-state">A moment while we find your next favorite…</div> :
-                titles.length ? <Bookshelf id="community-shelf" items={titles} onOpen={openViewer} label="Community shelf" /> :
+                titles.length ? <Bookshelf id="community-shelf" items={titles} onOpen={openTitleDetails} label="Community shelf" /> :
                   <div className="empty-state"><span className="empty-spark">✳</span><h3>{apiOnline ? 'No stories just yet.' : 'We can’t reach the catalog.'}</h3><p>{apiOnline ? 'Try a different search, or be the first to add this one.' : catalogError || 'Check your MySQL setup and API connection, then refresh to try again.'}</p><button className="button button-primary" onClick={() => user ? setModal('add') : (setAuthMode('register'), setModal('auth'))}><Icon name="plus" size={16} /> Add to the catalog</button></div>}
             </div>
             <aside className="side-column">
@@ -304,10 +322,11 @@ function App() {
 
       <footer className="site-footer"><a className="footer-brand" href="#">is it too <b>spicy?</b> <span>✳</span></a><span>Made with care, for stories worth feeling.</span><span>© {new Date().getFullYear()} Is It Too Spicy?</span></footer>
       {toast && <div className="toast" role="status">{toast}</div>}
-      {modal === 'auth' && <AuthModal mode={authMode} setMode={setAuthMode} onClose={() => { setModal(null); setPendingShelfItem(null); }} onSuccess={(newUser) => { setUser(newUser); setModal(pendingShelfItem ? 'viewer' : null); showToast(`Welcome${newUser.name ? `, ${newUser.name.split(' ')[0]}` : ''}! You're in.`); }} />}
+      {modal === 'auth' && <AuthModal mode={authMode} setMode={setAuthMode} onClose={() => { setModal(null); setPendingShelfItem(null); }} onSuccess={(newUser) => { setUser(newUser); setModal(pendingShelfItem ? 'detail' : null); showToast(`Welcome${newUser.name ? `, ${newUser.name.split(' ')[0]}` : ''}! You're in.`); }} />}
       {modal === 'add' && <AddModal onClose={() => setModal(null)} onCreated={(item) => { setTitles((current) => [item, ...current]); setModal(null); showToast('Added to the community catalog.'); setSelected(item); setModal('review'); }} />}
-      {modal === 'viewer' && selected && <MediaViewer item={selected} side={viewerSide} onSideChange={setViewerSide} isOnShelf={libraryItems.some((item) => String(item.id) === String(selected.id))} busy={libraryBusy} error={libraryError} onPlace={() => placeOnShelf(selected)} onRemove={() => removeFromShelf(selected)} onReturn={() => setModal(null)} onDetails={() => setModal('detail')} />}
-      {modal === 'detail' && selected && <DetailModal item={selected} onClose={() => setModal(null)} onReview={() => { if (!user) { setAuthMode('register'); setModal('auth'); return; } setModal('review'); }} />}
+      {modal === 'detail' && selected && <DetailModal item={selected} shelfEntry={libraryItems.find((entry) => String(entry.id) === String(selected.id))} busy={libraryBusy} shelfError={libraryError} onClose={() => setModal(null)} onPlace={(status) => placeOnShelf(selected, status)} onStatusChange={(status) => updateShelfStatus(selected, status)} onRemove={() => removeFromShelf(selected)} onReview={() => { if (!user) { setAuthMode('register'); setModal('auth'); return; } setModal('review'); }} />}
+      {modal === 'social' && user && <SocialModal user={user} onClose={() => setModal(null)} onChangePassword={() => setModal('password')} />}
+      {modal === 'password' && user && <ChangePasswordModal onClose={() => setModal(null)} onChanged={() => { setModal(null); showToast('Your password has been updated.'); }} />}
       {modal === 'review' && selected && <ReviewModal item={selected} onClose={() => setModal(null)} onSaved={() => { setModal(null); showToast('Your note is saved. Thanks for looking out for each other.'); loadTitles(); }} />}
     </div>
   );
@@ -316,6 +335,7 @@ function App() {
 function Bookshelf({ id, items, onOpen, label }) {
   const trackRef = useRef(null);
   const drag = useRef(null);
+  const [expanded, setExpanded] = useState(false);
 
   const startDrag = (event) => {
     if (event.button !== 0) return;
@@ -338,36 +358,16 @@ function Bookshelf({ id, items, onOpen, label }) {
   };
   const scrollByShelf = (direction) => trackRef.current?.scrollBy({ left: direction * 360, behavior: 'smooth' });
 
-  return <div className="bookshelf" id={id} role="region" aria-label={label}>
-    <div className="shelf-controls"><span>Scroll or drag to browse</span><div><button onClick={() => scrollByShelf(-1)} aria-label="Scroll shelf left"><Icon name="arrow" size={16} /></button><button onClick={() => scrollByShelf(1)} aria-label="Scroll shelf right"><Icon name="arrow" size={16} /></button></div></div>
+  return <div className={`bookshelf ${expanded ? 'bookshelf-expanded' : ''}`} id={id} role="region" aria-label={label}>
+    <div className="shelf-controls"><span>{expanded ? `${items.length} titles` : 'Scroll or drag to browse'}</span><div><button className="show-all-button" onClick={() => setExpanded((current) => !current)} aria-expanded={expanded}>{expanded ? 'Show shelf' : 'Show All'}</button>{!expanded && <><button onClick={() => scrollByShelf(-1)} aria-label="Scroll shelf left"><Icon name="arrow" size={16} /></button><button onClick={() => scrollByShelf(1)} aria-label="Scroll shelf right"><Icon name="arrow" size={16} /></button></>}</div></div>
     <div className="shelf-track" ref={trackRef} onPointerDown={startDrag} onPointerMove={moveDrag} onPointerCancel={() => { drag.current = null; }} onClickCapture={handleClick}>
-      <div className="shelf-items">{items.map((item) => <button className="shelf-item" key={item.id} onClick={() => onOpen(item)} aria-label={`Pick up ${item.title}`}>
+      <div className="shelf-items">{items.map((item) => <button className="shelf-item" key={item.id} onClick={() => onOpen(item)} aria-label={`View details for ${item.title}`}>
         <span className="shelf-cover"><Cover item={item} /><span className="shelf-media-kind">{item.kind === 'tv' ? 'TV & STREAMING' : item.kind.toUpperCase()}</span></span>
         <span className="shelf-item-title">{item.title}</span><span className="shelf-item-creator">{item.creator || 'Community pick'}</span>
       </button>)}</div>
       <div className="shelf-plank" aria-hidden="true"><span /></div>
     </div>
   </div>;
-}
-
-function MediaViewer({ item, side, onSideChange, isOnShelf, busy, error, onPlace, onRemove, onReturn, onDetails }) {
-  const isBack = side === 'back';
-  return <ModalFrame onClose={onReturn} wide>
-    <div className="viewer-heading"><span className="modal-kicker">PICKED UP FROM THE SHELF</span><h2>{item.title}</h2><p>{isBack ? 'Turn it over to see the front.' : 'Take a closer look, then set it back or keep it on your shelf.'}</p></div>
-    <div className={`held-media ${isBack ? 'held-media-back' : ''}`}>
-      {isBack && item.backCoverUrl ? <div className="held-cover held-cover-back"><img src={item.backCoverUrl} alt={`Back cover of ${item.title}`} /></div> :
-        isBack ? <div className="held-cover held-cover-back held-back-details"><span className="back-cover-kicker">A LITTLE ABOUT THIS STORY</span><h3>{item.title}</h3><p>{item.description || 'No back-cover details have been added yet.'}</p><span className="back-cover-creator">{item.creator || 'Community catalog'}</span></div> :
-          <div className="held-cover"><Cover item={item} /></div>}
-      <div className="viewer-hand" aria-hidden="true"><span /><span /><span /><span /><b /></div>
-    </div>
-    <div className="viewer-actions">
-      <div className="viewer-flip-controls"><button className={`button button-outline ${!isBack ? 'viewer-side-active' : ''}`} onClick={() => onSideChange('front')}>Front cover</button><button className={`button button-outline ${isBack ? 'viewer-side-active' : ''}`} onClick={() => onSideChange('back')}>Back cover</button></div>
-      <button className="button button-outline" onClick={onDetails}>Community notes</button>
-      {isOnShelf ? <button className="button button-primary" onClick={onReturn}>Put it back on my shelf</button> : <button className="button button-primary" onClick={onPlace} disabled={busy}>{busy ? 'Placing…' : 'Place on my shelf'}</button>}
-      {isOnShelf && <button className="viewer-remove" onClick={onRemove} disabled={busy}>{busy ? 'Updating…' : 'Remove from my shelf'}</button>}
-      {error && <p className="form-error viewer-error" role="alert">{error}</p>}
-    </div>
-  </ModalFrame>;
 }
 
 function AuthModal({ mode, setMode, onClose, onSuccess }) {
@@ -430,13 +430,167 @@ function AddModal({ onClose, onCreated }) {
   </ModalFrame>;
 }
 
-function DetailModal({ item, onClose, onReview }) {
+function DetailModal({ item, shelfEntry, busy, shelfError, onClose, onReview, onPlace, onStatusChange, onRemove }) {
   const [reviews, setReviews] = useState([]);
-  const [error, setError] = useState('');
-  useEffect(() => { api(`/titles/${item.id}/reviews`).then(({ reviews: data }) => setReviews(data)).catch((reason) => setError(reason.message)); }, [item.id]);
-  return <ModalFrame onClose={onClose} wide><div className="detail-layout"><Cover item={item} /><div className="detail-copy"><span className="modal-kicker">{item.kind.toUpperCase()}{item.releaseYear ? ` · ${item.releaseYear}` : ''}</span><h2>{item.title}</h2><p className="detail-creator">{item.creator || 'Community catalog'}</p><div className="detail-stats"><span><Icon name="flame" size={15} /> {item.averageSpice || '—'} / 5 spice</span><span><Icon name="star" size={15} /> {item.averageRating || '—'} / 5 rating</span></div><p className="detail-description">{item.description || 'A story waiting to be discovered. Community members can leave helpful, spoiler-conscious notes below.'}</p><button className="button button-primary" onClick={onReview}><Icon name="plus" size={16} /> Leave a note</button></div></div>
+  const [reviewError, setReviewError] = useState('');
+  const [status, setStatus] = useState(shelfEntry?.status || 'planned');
+  useEffect(() => { api(`/titles/${item.id}/reviews`).then(({ reviews: data }) => setReviews(data)).catch((reason) => setReviewError(reason.message)); }, [item.id]);
+  useEffect(() => { setStatus(shelfEntry?.status || 'planned'); }, [shelfEntry?.status, item.id]);
+  return <ModalFrame onClose={onClose} wide><div className="detail-layout"><Cover item={item} /><div className="detail-copy"><span className="modal-kicker">{item.kind.toUpperCase()}{item.releaseYear ? ` · ${item.releaseYear}` : ''}</span><h2>{item.title}</h2><p className="detail-creator">{item.creator ? `By ${item.creator}` : 'Community catalog'}</p><div className="detail-stats"><span><Icon name="flame" size={15} /> {item.averageSpice ?? '—'} / 5 spice</span><span><Icon name="star" size={15} /> {item.averageRating ?? '—'} / 5 rating</span></div><h3 className="synopsis-heading">Synopsis</h3><p className="detail-description">{item.description || 'A story waiting to be discovered. Community members can leave helpful, spoiler-conscious notes below.'}</p>
+        <div className="shelf-status-row"><label htmlFor="shelf-status">Shelf status</label><select id="shelf-status" value={status} onChange={(event) => { const nextStatus = event.target.value; if (shelfEntry) onStatusChange(nextStatus).then((saved) => { if (saved) setStatus(nextStatus); }); else setStatus(nextStatus); }} disabled={busy}><option value="planned">Not Started</option><option value="in_progress">In Progress</option><option value="completed">Completed</option><option value="dropped">Dropped</option></select></div>
+        <div className="detail-actions">{shelfEntry ? <button className="button button-outline button-small" onClick={onRemove} disabled={busy}>{busy ? 'Updating…' : 'Remove from shelf'}</button> : <button className="button button-primary button-small" onClick={() => onPlace(status)} disabled={busy}>{busy ? 'Adding…' : 'Add to my shelf'}</button>}<button className="button button-primary button-small" onClick={onReview}><Icon name="plus" size={16} /> Leave a note</button></div>
+        {shelfError && <p className="form-error detail-error" role="alert">{shelfError}</p>}
+      </div></div>
     <div className="reviews-heading"><h3>Community notes</h3><span>{reviews.length} {reviews.length === 1 ? 'note' : 'notes'}</span></div>
-    {error ? <p className="form-error">{error}</p> : reviews.length ? <div className="review-list">{reviews.map((review) => <div className="review-item" key={review.id}><div className="review-meta"><b>{review.reviewer}</b><span>{spiceLabels[review.spiceLevel]} · {review.rating}/5 stars</span></div><p>{review.notes}</p>{Array.isArray(review.warnings) && review.warnings.length > 0 && <div className="warning-tags">{review.warnings.map((warning) => <span key={warning}>{warning}</span>)}</div>}{review.containsSpoilers && <span className="spoiler-flag">Contains spoilers</span>}</div>)}</div> : <p className="no-reviews">No notes yet. You could be the first to look out for someone.</p>}
+    {reviewError ? <p className="form-error">{reviewError}</p> : reviews.length ? <div className="review-list">{reviews.map((review) => <div className="review-item" key={review.id}><div className="review-meta"><b>{review.reviewer}</b><span>{spiceLabels[review.spiceLevel]} · {review.rating}/5 stars</span></div><p>{review.notes}</p>{Array.isArray(review.warnings) && review.warnings.length > 0 && <div className="warning-tags">{review.warnings.map((warning) => <span key={warning}>{warning}</span>)}</div>}{review.containsSpoilers && <span className="spoiler-flag">Contains spoilers</span>}</div>)}</div> : <p className="no-reviews">No notes yet. You could be the first to look out for someone.</p>}
+  </ModalFrame>;
+}
+
+function SocialModal({ user, onClose, onChangePassword }) {
+  const [friends, setFriends] = useState([]);
+  const [inbox, setInbox] = useState([]);
+  const [people, setPeople] = useState([]);
+  const [tab, setTab] = useState('inbox');
+  const [partnerId, setPartnerId] = useState(null);
+  const [messages, setMessages] = useState([]);
+  const [messageText, setMessageText] = useState('');
+  const [search, setSearch] = useState('');
+  const [error, setError] = useState('');
+  const [busy, setBusy] = useState(false);
+
+  const refresh = async () => {
+    setError('');
+    try {
+      const [friendData, inboxData, peopleData] = await Promise.all([api('/friends'), api('/messages/inbox'), api('/users')]);
+      setFriends(friendData.friends);
+      setInbox(inboxData.inbox);
+      setPeople(peopleData.users.filter((person) => String(person.id) !== String(user.id)));
+    } catch (requestError) {
+      setError(requestError.message);
+    }
+  };
+  useEffect(() => { refresh(); }, [user.id]);
+
+  const openConversation = async (id) => {
+    setPartnerId(id);
+    setError('');
+    try {
+      const { messages: conversation } = await api(`/messages/${id}`);
+      setMessages(conversation);
+      const { inbox: conversations } = await api('/messages/inbox');
+      setInbox(conversations);
+    } catch (requestError) {
+      setError(requestError.message);
+    }
+  };
+  const acceptRequest = async (friend) => {
+    setBusy(true);
+    setError('');
+    try {
+      await api(`/friends/${friend.requesterId}/accept`, { method: 'PUT' });
+      await refresh();
+    } catch (requestError) {
+      setError(requestError.message);
+    } finally {
+      setBusy(false);
+    }
+  };
+  const addFriend = async (person) => {
+    setBusy(true);
+    setError('');
+    try {
+      await api('/friends/request', { method: 'POST', body: JSON.stringify({ friendId: person.id }) });
+      await refresh();
+    } catch (requestError) {
+      setError(requestError.message);
+    } finally {
+      setBusy(false);
+    }
+  };
+  const sendMessage = async (event) => {
+    event.preventDefault();
+    if (!partnerId || !messageText.trim()) return;
+    setBusy(true);
+    setError('');
+    try {
+      await api(`/messages/${partnerId}`, { method: 'POST', body: JSON.stringify({ content: messageText.trim() }) });
+      setMessageText('');
+      await openConversation(partnerId);
+    } catch (requestError) {
+      setError(requestError.message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const incomingRequests = friends.filter((friend) => friend.status === 'pending' && Number(friend.requesterId) !== Number(user.id));
+  const outgoingRequests = friends.filter((friend) => friend.status === 'pending' && Number(friend.requesterId) === Number(user.id));
+  const acceptedFriends = friends.filter((friend) => friend.status === 'accepted');
+  const visiblePeople = people.filter((person) => `${person.name} ${person.username || ''}`.toLowerCase().includes(search.toLowerCase()));
+  const relationshipFor = (id) => friends.find((friend) => Number(friend.id) === Number(id));
+
+  return <ModalFrame onClose={onClose} wide>
+    <div className="social-heading"><div><span className="modal-kicker">YOUR PEOPLE ARE HERE</span><h2>Friends &amp; inbox</h2><p>Friend requests, conversations, and ways to find your people.</p></div><button className="button button-outline button-small" onClick={onChangePassword}>Change password</button></div>
+    <div className="social-tabs" role="tablist" aria-label="Friends and inbox sections">
+      <button className={tab === 'inbox' ? 'selected' : ''} onClick={() => setTab('inbox')} role="tab" aria-selected={tab === 'inbox'}>Inbox{incomingRequests.length > 0 && <span>{incomingRequests.length}</span>}</button>
+      <button className={tab === 'people' ? 'selected' : ''} onClick={() => setTab('people')} role="tab" aria-selected={tab === 'people'}>Find people</button>
+    </div>
+    {error && <p className="form-error social-error" role="alert">{error}</p>}
+    {tab === 'inbox' ? <div className="social-content">
+      {partnerId ? <section className="conversation-panel">
+        <div className="conversation-heading"><button className="text-link" onClick={() => setPartnerId(null)}>← Inbox</button><h3>{friends.find((friend) => Number(friend.id) === Number(partnerId))?.name || inbox.find((entry) => Number(entry.partnerId) === Number(partnerId))?.partnerName || 'Conversation'}</h3></div>
+        <div className="conversation-messages">{messages.map((message) => <p key={message.id} className={Number(message.senderId) === Number(user.id) ? 'message message-mine' : 'message'}>{message.content}</p>)}</div>
+        <form className="message-form" onSubmit={sendMessage}><input value={messageText} onChange={(event) => setMessageText(event.target.value)} maxLength="4000" placeholder="Write a kind message…" aria-label="Message" /><button className="button button-primary button-small" disabled={busy || !messageText.trim()}>{busy ? 'Sending…' : 'Send'}</button></form>
+      </section> : <>
+        <section className="social-section"><h3>Friend requests <span>{incomingRequests.length}</span></h3>
+          {incomingRequests.length ? incomingRequests.map((friend) => <div className="social-person" key={friend.id}><div><b>{friend.name}</b><small>@{friend.username || `reader${friend.id}`}</small></div><button className="button button-primary button-small" onClick={() => acceptRequest(friend)} disabled={busy}>Accept</button></div>) : <p className="social-empty">No incoming friend requests.</p>}
+          {outgoingRequests.map((friend) => <div className="social-person social-pending" key={`sent-${friend.id}`}><div><b>{friend.name}</b><small>Request sent</small></div><span>Pending</span></div>)}
+        </section>
+        <section className="social-section"><h3>Messages</h3>
+          {inbox.length ? inbox.map((conversation) => <button className="conversation-item" key={conversation.partnerId} onClick={() => openConversation(conversation.partnerId)}><span><b>{conversation.partnerName}</b><small>{conversation.lastMessage}</small></span><time>{new Date(conversation.lastMessageAt).toLocaleDateString()}</time></button>) : <p className="social-empty">No conversations yet. Find a friend to start one.</p>}
+        </section>
+        <section className="social-section"><h3>Friends</h3>
+          {acceptedFriends.length ? acceptedFriends.map((friend) => <div className="social-person" key={friend.id}><div><b>{friend.name}</b><small>@{friend.username || `reader${friend.id}`}</small></div><button className="button button-outline button-small" onClick={() => openConversation(friend.id)}>Message</button></div>) : <p className="social-empty">You haven’t added friends yet.</p>}
+        </section>
+      </>}
+    </div> : <div className="social-content">
+      <label className="people-search">Search readers<input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Name or username" /></label>
+      <div className="people-list">{visiblePeople.map((person) => {
+        const relation = relationshipFor(person.id);
+        return <div className="social-person" key={person.id}><div><b>{person.name}</b><small>@{person.username || `reader${person.id}`}</small></div>
+          {relation?.status === 'accepted' ? <button className="button button-outline button-small" onClick={() => { setTab('inbox'); openConversation(person.id); }}>Message</button> :
+            relation?.status === 'pending' ? <span>{Number(relation.requesterId) === Number(user.id) ? 'Request sent' : 'Request received'}</span> :
+              <button className="button button-primary button-small" onClick={() => addFriend(person)} disabled={busy}>Add friend</button>}
+        </div>;
+      })}{!visiblePeople.length && <p className="social-empty">No readers match that search.</p>}</div>
+    </div>}
+  </ModalFrame>;
+}
+
+function ChangePasswordModal({ onClose, onChanged }) {
+  const [error, setError] = useState('');
+  const [busy, setBusy] = useState(false);
+  const submit = async (event) => {
+    event.preventDefault();
+    setError('');
+    setBusy(true);
+    const form = Object.fromEntries(new FormData(event.currentTarget));
+    try {
+      await api('/auth/change-password', { method: 'POST', body: JSON.stringify(form) });
+      onChanged();
+    } catch (requestError) {
+      setError(requestError.message);
+    } finally {
+      setBusy(false);
+    }
+  };
+  return <ModalFrame onClose={onClose}><div className="modal-heading"><span className="modal-kicker">ACCOUNT SECURITY</span><h2>Change your password.</h2><p>Confirm your current password, then choose a new one.</p></div>
+    <form className="form-stack" onSubmit={submit}>
+      <label>Current password<input type="password" name="currentPassword" minLength="8" maxLength="72" autoComplete="current-password" required /></label>
+      <label>New password<input type="password" name="newPassword" minLength="8" maxLength="72" autoComplete="new-password" required /></label>
+      {error && <p className="form-error" role="alert">{error}</p>}
+      <button className="button button-primary button-wide" disabled={busy}>{busy ? 'Updating…' : 'Update password'}</button>
+    </form>
   </ModalFrame>;
 }
 
