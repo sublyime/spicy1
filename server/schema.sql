@@ -20,6 +20,7 @@ CREATE TABLE IF NOT EXISTS titles (
   genres TEXT NULL,
   tropes TEXT NULL,
   tags TEXT NULL,
+  series VARCHAR(200) NULL,
   created_by BIGINT UNSIGNED NULL,
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   UNIQUE KEY uq_titles_isbn (isbn),
